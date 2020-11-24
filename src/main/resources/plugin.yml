@@ -1,0 +1,17 @@
+main: ${mainClass}
+version: ${project.version}
+name: ${project.artifactId}
+authors: [Pdani001]
+website: 'theserver.wtf'
+api-version: '1.16'
+description: 'A Discord link plugin written for TheServer.wtf'
+softdepend: [Vault,OptionalCensor-mikemik44]
+commands:
+  tsdiscord:
+    description: 'Main plugin command for TSDiscord'
+    usage: '/<command>'
+    aliases: [tsd]
+permissions:
+  tsdiscord.admin:
+    default: op
+    description: 'Permission to use the plugin command'

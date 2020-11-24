@@ -1,0 +1,32 @@
+token: ''
+prefix: '>'
+channels:
+  main: ''
+  mature: ''
+  log: ''
+  status: ''
+roleIgnore: []
+chatFormat: '&8[&eDISCORD&8] &a{user}: &f{msg}'
+message:
+  presence:
+    online: 'Server'
+    starting: 'Startup...'
+  shutdown: ':octagonal_sign: Server shutdown.'
+  startup: ':white_check_mark: Server is starting.'
+  join: '%player% joined the server.'
+  leave: '%player% left the server.'
+  swear: 'Please, do not swear in a non-mature channel!'
+  topic:
+    enabled: true
+    online: 'Online | Players: %current%/%max% | Last updated: %time%'
+    offline: 'Offline | Last updated: %time%'
+    time: 'dd/MM/yyyy HH:mm:ss'
+    update: 13
+  status:
+    update: 2
+    title: 'Current Server Status'
+    state:
+      title: 'State'
+      online: ':white_check_mark: Server is online.'
+      offline: ':x: Server is offline.'
+    players: 'Players online'
