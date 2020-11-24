@@ -1,10 +1,17 @@
 package hu.Pdani.TSDiscord.utils;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -32,18 +39,29 @@ public class Updater {
     private void loadConfig(boolean isMaven){
         try {
             URL url;
-            if(!isMaven)
-                url = new URL("https://raw.githubusercontent.com/"+repo+"/master/src/plugin.yml");
-            else
-                url = new URL("https://raw.githubusercontent.com/"+repo+"/master/src/main/resources/plugin.yml");
-            Scanner scan = new Scanner(url.openStream());
-            StringBuilder sb = new StringBuilder();
-            while(scan.hasNext()){
-                sb.append(scan.nextLine());
-                sb.append(System.getProperty("line.separator"));
+            if(!isMaven) {
+                url = new URL("https://raw.githubusercontent.com/" + repo + "/master/src/plugin.yml");
+                Scanner scan = new Scanner(url.openStream());
+                StringBuilder sb = new StringBuilder();
+                while(scan.hasNext()){
+                    sb.append(scan.nextLine());
+                    sb.append(System.getProperty("line.separator"));
+                }
+                Yaml yaml = new Yaml();
+                obj = yaml.load(sb.toString());
+            } else {
+                url = new URL("https://raw.githubusercontent.com/" + repo + "/master/pom.xml");
+                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                Document doc = dBuilder.parse(url.openStream());
+                doc.getDocumentElement().normalize();
+                NodeList nodelist = doc.getElementsByTagName("version");
+                if(nodelist.getLength() > 0) {
+                    String version = nodelist.item(0).getTextContent();
+                    obj = new HashMap<>();
+                    obj.put("version", version);
+                }
             }
-            Yaml yaml = new Yaml();
-            obj = yaml.load(sb.toString());
             lastLoad = System.currentTimeMillis()/1000;
             useMaven = isMaven;
         } catch (FileNotFoundException e2) {
@@ -54,6 +72,8 @@ public class Updater {
             obj = null;
         } catch (IOException e) {
             e.printStackTrace();
+            obj = null;
+        } catch (ParserConfigurationException | SAXException e) {
             obj = null;
         }
     }

@@ -25,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
-//import java.util.*;
 
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
@@ -77,41 +76,8 @@ public class DiscordListener implements Listener, MessageCreateListener {
     @Override
     public void onMessageCreate(MessageCreateEvent gmre) {
         if(BotHandler.shutdown) {
-            TSDiscordPlugin.getPlugin().sendDebug("Bot is marked for shutdown?");
             return;
         }
-        /*if(e instanceof ReadyEvent){
-            String channel = plugin.getConfig().getString("channelId","");
-            if(channel.isEmpty()){
-                channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
-            }
-            String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature","");
-            if(!channel.isEmpty()) {
-                TextChannel tc = plugin.getBot().getBot().getTextChannelById(channel);
-                if(tc != null) {
-                    String startup = plugin.getConfig().getString("message.startup",":white_check_mark: Server is online.");
-                    if(startup != null && !startup.isEmpty())
-                        tc.sendMessage(startup).complete();
-                } else {
-                    TSDiscordPlugin.getPlugin().sendDebug("Channel is not found");
-                }
-            } else {
-                TSDiscordPlugin.getPlugin().sendDebug("Channel is empty in config");
-            }
-            if(!mature.isEmpty()) {
-                TextChannel tc = plugin.getBot().getBot().getTextChannelById(mature);
-                if(tc != null) {
-                    String startup = plugin.getConfig().getString("message.startup",":white_check_mark: Server is online.");
-                    if(startup != null && !startup.isEmpty())
-                        tc.sendMessage(startup).complete();
-                }
-            }
-            return;
-        }
-        if(!(e instanceof GuildMessageReceivedEvent)) {
-            return;
-        }*/
-        //GuildMessageReceivedEvent gmre = (GuildMessageReceivedEvent) e;
         if(!gmre.isServerMessage())
             return;
         ConfigurationSection section = plugin.getConfig().getConfigurationSection("channels");
@@ -121,20 +87,18 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 return;
         }
         Message msg = gmre.getMessage();
-        if(msg.getAuthor().getIdAsString().equals(plugin.getBot().getYourself().getIdAsString()))
+        MessageAuthor author = gmre.getMessageAuthor();
+        String message = msg.getReadableContent();
+        if(author.isWebhook() || author.isBotUser() || author.isYourself() || message.isEmpty())
             return;
-        /*if(BotHandler.isCommand(gmre.getMessage().getContentDisplay())
-                && BotHandler.hasCommand(gmre.getMessage().getContentDisplay())) {
-            TSDiscordPlugin.getPlugin().sendDebug("The message contains a valid command, skipping.");   // TODO: Reimplement this using Javacord
+        if(BotHandler.isCommand(message)
+                && BotHandler.hasCommand(message)) {
+            TSDiscordPlugin.getPlugin().sendDebug("The message contains a valid command, skipping.");
             return;
-        }*/
+        }
         TSDiscordPlugin.getPlugin().sendDebug("Message received!");
         boolean isMature = gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.mature",""));
-        String message = gmre.getMessage().getReadableContent();
-        MessageAuthor author = gmre.getMessageAuthor();
         if(!isMature && plugin.checkSwearing(message)){
-            List<MessageAttachment> files = gmre.getMessage().getAttachments();
-            gmre.getMessage().delete().join();
             String hook = ImportantConfig.getConfig().getString("webhooks."+gmre.getChannel().getIdAsString(),"");
             if(!hook.isEmpty()) {
                 Object censored = null;
@@ -154,7 +118,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
                     }
                 }
                 if(censored != null)
-                    BotHandler.sendWebhook(hook, (String)censored,author.getDisplayName(),author.getAvatar().getUrl().toString(),files);
+                    BotHandler.sendWebhook(hook, (String)censored,author.getDisplayName(),author.getAvatar().getUrl().toString(),msg);
             }
             Server guild = gmre.getServer().orElse(null);
             User member = author.asUser().orElse(null);
@@ -195,7 +159,10 @@ public class DiscordListener implements Listener, MessageCreateListener {
             String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
             if(chatFormat == null || chatFormat.isEmpty())
                 chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
-            plugin.getServer().getConsoleSender().sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+format(event.getMessage()));
+            chatFormat = chatFormat.replace("{user}","%s");
+            chatFormat = chatFormat.replace("{msg}","%s");
+            //plugin.getServer().getConsoleSender().sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+format(event.getMessage()));
+            plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),event.getUser(),event.getMessage()));
             Field field = null;
             Object censObj = null;
             HashMap<String, Double> cens = new HashMap<>();
@@ -218,15 +185,16 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 }
                 String send = (censored == null) ? message : (String)censored;
                 send = format(ChatColor.stripColor(send));
-                p.sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+send);
+                //p.sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+send);
+                p.sendMessage(String.format(c(chatFormat),event.getUser(),send));
             }
         }
     }
 
     private String format(String message){
-        message = message.replace("***(.+)***","&l&o$1&r");
-        message = message.replace("**(.+)**","&l$1&r");
-        message = message.replace("*(.+)*","&o$1&r");
+        message = message.replace("\\*\\*\\*(.+)\\*\\*\\*","&l&o$1&r");
+        message = message.replace("\\*\\*(.+)\\*\\*","&l$1&r");
+        message = message.replace("\\*(.+)\\*","&o$1&r");
         message = message.replace("___(.+)___","&o&n$1&r");
         message = message.replace("__(.+)__","&n$1&r");
         message = message.replace("_(.+)_","&o$1&r");

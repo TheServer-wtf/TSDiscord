@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 public class TSDiscordPlugin extends JavaPlugin {
     private static DiscordApi bot;
     protected static DiscordListener dl;
+    protected static CommandListener cl;
     private static TSDiscordPlugin plugin;
     private static Main censorPlugin;
     public static double tps = 0.00;
@@ -37,6 +38,7 @@ public class TSDiscordPlugin extends JavaPlugin {
         Updater updater = new Updater("TheServer-wtf/TSDiscord");
         startUpdateCheck(updater);
         ImportantConfig.loadConfig();
+        cl = new CommandListener();
         String token = getConfig().getString("token","");
         String prefix = getConfig().getString("prefix",">");
         if((token != null && !token.isEmpty()) && (prefix != null && !prefix.isEmpty())) {
@@ -54,7 +56,7 @@ public class TSDiscordPlugin extends JavaPlugin {
         } else {
             getLogger().warning("Bot token or prefix is empty!");
         }
-        getCommand("tsdiscord").setExecutor(new CommandListener());
+        getCommand("tsdiscord").setExecutor(cl);
         Plugin cp = getServer().getPluginManager().getPlugin("OptionalCensor-mikemik44");
         if(cp instanceof Main)
             censorPlugin = (Main) cp;

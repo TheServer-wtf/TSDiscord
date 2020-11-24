@@ -2,6 +2,9 @@ package hu.Pdani.TSDiscord;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import hu.Pdani.TSDiscord.cmds.OnlineCommand;
+import hu.Pdani.TSDiscord.cmds.TPSCommand;
+import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -13,20 +16,19 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.entity.permission.PermissionType;
-import org.javacord.api.entity.permission.Role;
-import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.webhook.Webhook;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BotHandler {
     private static BotHandler inst;
@@ -37,7 +39,7 @@ public class BotHandler {
     private static List<CompletableFuture> updates = new ArrayList<>();
     protected static void startup(DiscordApi bot){
         BotHandler.bot = bot;
-        PermissionType[] perms = {PermissionType.MANAGE_CHANNELS,PermissionType.MANAGE_WEBHOOKS,PermissionType.MANAGE_MESSAGES, PermissionType.READ_MESSAGES, PermissionType.SEND_MESSAGES};
+        /*PermissionType[] perms = {PermissionType.MANAGE_CHANNELS,PermissionType.MANAGE_WEBHOOKS,PermissionType.MANAGE_MESSAGES, PermissionType.READ_MESSAGES, PermissionType.SEND_MESSAGES};
         for(Role r : BotHandler.bot.getRoles()){
             if(!r.getAllowedPermissions().containsAll(Arrays.asList(perms)) && !r.getAllowedPermissions().contains(PermissionType.ADMINISTRATOR)){
                 StringBuilder send = new StringBuilder();
@@ -51,12 +53,15 @@ public class BotHandler {
                 TSDiscordPlugin.getPlugin().getLogger().severe(send.toString());
                 return;
             }
-        }
+        }*/
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
         String online = config.getString("message.presence.starting","Startup...");
         if(online != null && !online.isEmpty())
             BotHandler.bot.updateActivity(ActivityType.WATCHING,online);
-        BotHandler.bot.addListener(TSDiscordPlugin.dl);
+        BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
+        BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.cl);
+        CommandManager.addCommand(new TPSCommand());
+        CommandManager.addCommand(new OnlineCommand());
         /*BotHandler.bot.getBot().addEventListener(TSDiscordPlugin.dl);
         BotHandler.bot.addCommand(new TPSCommand());
         BotHandler.bot.addCommand(new OnlineCommand());*/
@@ -74,14 +79,14 @@ public class BotHandler {
             String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature", "");
             if (!channel.isEmpty()) {
                 plugin.getBot().getTextChannelById(channel).ifPresent((tc) -> {
-                    tc.sendMessage(startup).join();
+                    tc.sendMessage(startup);
                 });
             } else {
                 TSDiscordPlugin.getPlugin().sendDebug("Channel is empty in config");
             }
             if (!mature.isEmpty()) {
                 plugin.getBot().getTextChannelById(mature).ifPresent((tc) -> {
-                    tc.sendMessage(startup).join();
+                    tc.sendMessage(startup);
                 });
             } else {
                 TSDiscordPlugin.getPlugin().sendDebug("Mature Channel is empty in config");
@@ -110,7 +115,7 @@ public class BotHandler {
             return;
         }
         String shutdown = TSDiscordPlugin.getPlugin().getConfig().getString("message.shutdown", ":octagonal_sign: Server shutdown.");
-        tc.sendMessage(shutdown).join();
+        tc.sendMessage(shutdown);
         String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature","");
         if(mature.isEmpty()) {
             stopTopicUpdate();
@@ -121,7 +126,7 @@ public class BotHandler {
             stopTopicUpdate();
             return;
         }
-        tc.sendMessage(shutdown).join();
+        tc.sendMessage(shutdown);
         stopTopicUpdate();
     }
     protected static void startTopicUpdate(){
@@ -202,7 +207,7 @@ public class BotHandler {
                         ImportantConfig.reloadConfig();
                         return;
                     }
-                    message.edit(embed).join();
+                    message.edit(embed);
                 } else {
                     Message msg = tc.sendMessage(embed).join();
                     important.set("statusId",msg.getIdAsString());
@@ -236,7 +241,7 @@ public class BotHandler {
                 ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(channel).orElse(null);
                 if (tc != null) {
                     String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.offline", "Offline | Updated: %time%");
-                    tc.updateTopic(msg.replace("%time%", formatter.format(date))).join();
+                    tc.updateTopic(msg.replace("%time%", formatter.format(date)));
                 }
             }
         }
@@ -265,7 +270,7 @@ public class BotHandler {
                         ImportantConfig.reloadConfig();
                         return;
                     }
-                    message.edit(embed).join();
+                    message.edit(embed);
                 } else {
                     Message msg = tc.sendMessage(embed).join();
                     important.set("statusId",msg.getIdAsString());
@@ -313,17 +318,17 @@ public class BotHandler {
         return m.startsWith(prefix);
     }
     public static boolean hasCommand(String m){
-        /*if(!isCommand(m) || bot == null)
+        if(!isCommand(m) || bot == null)
             return false;
         String prefix = TSDiscordPlugin.getPlugin().getConfig().getString("prefix",">");
         String cmd = m.replaceFirst(prefix,"");
         if(cmd.contains(" "))
             cmd = cmd.split(" ")[0];
-        for(ProgramCommand pc : bot.getCommands()){
-            if(pc.getLabel().equalsIgnoreCase(cmd))
+        for(String label : CommandManager.getCommandList()){
+            if(label.equalsIgnoreCase(cmd))
                 return true;
-        }*/
-        return false; // TODO: Rewrite this using Javacord
+        }
+        return false;
     }
     protected static void chat(Player user, String message){
         if(bot == null) {
@@ -411,8 +416,13 @@ public class BotHandler {
         }
         return message;
     }
-    public static void sendWebhook(String webhookId, String message, String name, String avatarUrl, List<MessageAttachment> attachments){
+    public static void sendWebhook(String webhookId, String message, String name, String avatarUrl, Message original){
         validateWebhook(webhookId).whenComplete((hook,error)->{
+            if(error != null){
+                TSDiscordPlugin.getPlugin().getLogger().severe(String.format("Error while trying to send webhook: %s",error));
+                TSDiscordPlugin.getPlugin().sendDebug(String.format("Error while trying to send webhook: %s",error));
+                return;
+            }
             WebhookClient client = WebhookClient.withId(hook.getId(),hook.getToken().orElse(""));
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
             builder.setUsername(name);
@@ -421,15 +431,29 @@ public class BotHandler {
             else
                 builder.setAvatarUrl("https://minotar.net/helm/"+name+"/300.png?v="+System.nanoTime());
             builder.setContent(message);
+            List<MessageAttachment> attachments = original != null ? original.getAttachments() : null;
             if(attachments != null && !attachments.isEmpty()){
+                AtomicInteger failed = new AtomicInteger();
                 for(MessageAttachment a : attachments){
-                    try {
-                        builder.addFile(a.getFileName(),a.downloadAsInputStream());
-                    } catch (IOException e) {
-                        TSDiscordPlugin.getPlugin().getLogger().severe(String.format("There was an error trying to add an attachment to the webhook: %s",e));
-                    }
+                    a.downloadAsByteArray().whenComplete((bytes,throwable)->{
+                        if(throwable != null) {
+                            failed.getAndIncrement();
+                        } else {
+                            InputStream stream = new ByteArrayInputStream(bytes);
+                            builder.addFile(a.getFileName(), stream);
+                        }
+                        if(builder.getFileAmount()+ failed.get() == attachments.size()){
+                            if(client.isShutdown())
+                                return;
+                            client.send(builder.build());
+                            client.close();
+                            original.delete();
+                        }
+                    });
                 }
             } else {
+                if(original != null)
+                    original.delete();
                 client.send(builder.build());
                 client.close();
             }
@@ -439,21 +463,6 @@ public class BotHandler {
         sendWebhook(webhookId, message, name, avatarUrl,null);
     }
     private static CompletableFuture<Webhook> validateWebhook(String webhook){
-        CompletableFuture<Webhook> future = new CompletableFuture<>();
-        for(Server g : TSDiscordPlugin.getDiscordBot().getServers()){
-            for (ServerTextChannel tc : g.getTextChannels()) {
-                if(tc.hasPermission(bot.getYourself(),PermissionType.MANAGE_WEBHOOKS)) {
-                    tc.getWebhooks().whenComplete((list, error) -> {
-                        for (Webhook w : list) {
-                            if (w.getIdAsString().equals(webhook)) {
-                                future.complete(w);
-                                return;
-                            }
-                        }
-                    });
-                }
-            }
-        }
-        return future;
+        return TSDiscordPlugin.getDiscordBot().getWebhookById(Long.parseLong(webhook));
     }
 }
