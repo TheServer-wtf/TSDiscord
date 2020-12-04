@@ -97,6 +97,7 @@ public class TSDiscordPlugin extends JavaPlugin {
         Set<String> list = def.getKeys(false);
         ConfigurationSection config = getConfig().getDefaultSection();
         if(config == null){
+            getLogger().severe("Invalid config file on disk! Is this the first time the plugin is running?");
             return;
         }
         Set<String> current = config.getKeys(false);
