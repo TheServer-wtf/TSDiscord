@@ -6,7 +6,7 @@
 **This plugin can hook into mikemik44's OptionalCensor plugin.**
 ***
 ### Commands:
-- **/tsdiscord**
+- **/tsdiscord [debug]**
   - `Main plugin command for TSDiscord`
 
 ### Permissions:
