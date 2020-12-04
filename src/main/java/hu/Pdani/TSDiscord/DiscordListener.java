@@ -26,6 +26,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
@@ -163,6 +165,9 @@ public class DiscordListener implements Listener, MessageCreateListener {
             chatFormat = chatFormat.replace("{user}","%s");
             chatFormat = chatFormat.replace("{msg}","%s");
             chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
+            if(plugin.getConfig().getBoolean("hexColor",false)){
+                chatFormat = getHexColors(chatFormat);
+            }
             //plugin.getServer().getConsoleSender().sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+format(event.getMessage()));
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),event.getUser(),event.getMessage()));
             Field field = null;
@@ -202,6 +207,18 @@ public class DiscordListener implements Listener, MessageCreateListener {
         message = message.replace("_(.+)_","&o$1&r");
         message = message.replace("~~(.+)~~","&m$1&r");
         return ChatColor.translateAlternateColorCodes('&',message);
+    }
+
+    private String getHexColors(String text){
+        Pattern hexPattern = Pattern.compile("#[A-Fa-f0-9]{6}");
+        Matcher matcher = hexPattern.matcher(text);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(result, net.md_5.bungee.api.ChatColor.of(matcher.group()).toString());
+        }
+        matcher.appendTail(result);
+        text = result.toString();
+        return text;
     }
 
     private boolean hasIgnoredRole(Server guild, List<Role> roles){

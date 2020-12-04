@@ -6,6 +6,7 @@ channels:
   log: ''
   status: ''
 roleIgnore: []
+hexColor: false
 chatFormat: '&8[&eDISCORD&8] &a{user}: &f{msg}'
 message:
   presence:

@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.12.2</version>
+    <version>0.12.3</version>
     <properties>
         <mainClass>${project.groupId}.${project.artifactId}.${project.artifactId}Plugin</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +25,12 @@
             <artifactId>spigot-api</artifactId>
             <version>1.16.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-chat</artifactId>
+            <version>1.16-R0.3</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.javacord</groupId>

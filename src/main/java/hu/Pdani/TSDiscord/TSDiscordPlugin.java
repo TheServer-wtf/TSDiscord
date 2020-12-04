@@ -8,6 +8,8 @@ import hu.Pdani.TSDiscord.utils.Updater;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -17,8 +19,8 @@ import org.javacord.api.DiscordApiBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TSDiscordPlugin extends JavaPlugin {
     private static DiscordApi bot;
@@ -34,6 +36,7 @@ public class TSDiscordPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        addNewConfigOptions();
         plugin = this;
         Updater updater = new Updater("TheServer-wtf/TSDiscord");
         startUpdateCheck(updater);
@@ -79,6 +82,45 @@ public class TSDiscordPlugin extends JavaPlugin {
         if(rsp == null)
             return;
         chat = rsp.getProvider();
+    }
+    private void addNewConfigOptions(){
+        Configuration dc = getConfig().getDefaults();
+        if(dc == null){
+            getLogger().severe("Default config file not found! Try re-installing the plugin?");
+            return;
+        }
+        ConfigurationSection def = dc.getDefaultSection();
+        if(def == null){
+            getLogger().severe("Invalid default config file! Try re-installing the plugin?");
+            return;
+        }
+        Set<String> list = def.getKeys(false);
+        ConfigurationSection config = getConfig().getDefaultSection();
+        if(config == null){
+            return;
+        }
+        Set<String> current = config.getKeys(false);
+        AtomicBoolean hasChange = new AtomicBoolean(false);
+        for(String name : list){
+            if(!current.contains(name)){
+                hasChange.set(true);
+                setConfig(name, def);
+            }
+        }
+        if(hasChange.get()){
+            saveConfig();
+        }
+    }
+    private void setConfig(String name, ConfigurationSection def){
+        if(def.isConfigurationSection(name)){
+            ConfigurationSection child = def.getConfigurationSection(name);
+            for(String cn : child.getKeys(false)){
+                setConfig(cn,def);
+            }
+        } else {
+            Object value = def.get(name);
+            getConfig().set(name,value);
+        }
     }
 
 
