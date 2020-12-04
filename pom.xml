@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.12.0</version>
+    <version>0.12.1</version>
     <properties>
         <mainClass>${project.groupId}.${project.artifactId}.${project.artifactId}Plugin</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -49,6 +49,12 @@
             <groupId>club.minnced</groupId>
             <artifactId>discord-webhooks</artifactId>
             <version>LATEST</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.11</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

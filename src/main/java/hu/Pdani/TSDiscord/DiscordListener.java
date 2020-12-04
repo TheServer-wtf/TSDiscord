@@ -1,6 +1,7 @@
 package hu.Pdani.TSDiscord;
 
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -199,7 +200,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
         message = message.replace("__(.+)__","&n$1&r");
         message = message.replace("_(.+)_","&o$1&r");
         message = message.replace("~~(.+)~~","&m$1&r");
-        return ChatColor.translateAlternateColorCodes('&',message);
+        return StringEscapeUtils.unescapeJava(ChatColor.translateAlternateColorCodes('&',message));
     }
 
     private boolean hasIgnoredRole(Server guild, List<Role> roles){
