@@ -162,6 +162,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
             chatFormat = chatFormat.replace("{user}","%s");
             chatFormat = chatFormat.replace("{msg}","%s");
+            chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
             //plugin.getServer().getConsoleSender().sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+format(event.getMessage()));
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),event.getUser(),event.getMessage()));
             Field field = null;
@@ -200,7 +201,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
         message = message.replace("__(.+)__","&n$1&r");
         message = message.replace("_(.+)_","&o$1&r");
         message = message.replace("~~(.+)~~","&m$1&r");
-        return StringEscapeUtils.unescapeJava(ChatColor.translateAlternateColorCodes('&',message));
+        return ChatColor.translateAlternateColorCodes('&',message);
     }
 
     private boolean hasIgnoredRole(Server guild, List<Role> roles){
