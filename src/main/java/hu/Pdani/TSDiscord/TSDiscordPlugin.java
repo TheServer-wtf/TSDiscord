@@ -150,11 +150,11 @@ public class TSDiscordPlugin extends JavaPlugin {
         return getCensorPlugin();
     }
 
-    protected DiscordApi getBot(){
+    public DiscordApi getBot(){
         return getDiscordBot();
     }
 
-    protected static DiscordApi getDiscordBot(){
+    public static DiscordApi getDiscordBot(){
         return bot;
     }
 

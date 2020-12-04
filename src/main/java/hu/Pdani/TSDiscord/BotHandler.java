@@ -4,6 +4,7 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import hu.Pdani.TSDiscord.cmds.OnlineCommand;
 import hu.Pdani.TSDiscord.cmds.TPSCommand;
+import hu.Pdani.TSDiscord.cmds.VersionCommand;
 import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import org.bukkit.ChatColor;
@@ -31,7 +32,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BotHandler {
-    private static BotHandler inst;
     private static DiscordApi bot;
     public static boolean shutdown = false;
     public static int task = -1;
@@ -39,32 +39,15 @@ public class BotHandler {
     private static List<CompletableFuture> updates = new ArrayList<>();
     protected static void startup(DiscordApi bot){
         BotHandler.bot = bot;
-        /*PermissionType[] perms = {PermissionType.MANAGE_CHANNELS,PermissionType.MANAGE_WEBHOOKS,PermissionType.MANAGE_MESSAGES, PermissionType.READ_MESSAGES, PermissionType.SEND_MESSAGES};
-        for(Role r : BotHandler.bot.getRoles()){
-            if(!r.getAllowedPermissions().containsAll(Arrays.asList(perms)) && !r.getAllowedPermissions().contains(PermissionType.ADMINISTRATOR)){
-                StringBuilder send = new StringBuilder();
-                for(PermissionType p : perms){
-                    if(send.length() > 0){
-                        send.append(", ");
-                    }
-                    send.append(p.toString());
-                }
-                TSDiscordPlugin.getPlugin().getLogger().severe("A required bot permission is missing! Please check that the bot has all the required permissions:");
-                TSDiscordPlugin.getPlugin().getLogger().severe(send.toString());
-                return;
-            }
-        }*/
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
         String online = config.getString("message.presence.starting","Startup...");
         if(online != null && !online.isEmpty())
             BotHandler.bot.updateActivity(ActivityType.WATCHING,online);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.cl);
-        CommandManager.addCommand(new TPSCommand());
-        CommandManager.addCommand(new OnlineCommand());
-        /*BotHandler.bot.getBot().addEventListener(TSDiscordPlugin.dl);
-        BotHandler.bot.addCommand(new TPSCommand());
-        BotHandler.bot.addCommand(new OnlineCommand());*/
+        CommandManager.add(new TPSCommand());
+        CommandManager.add(new OnlineCommand());
+        CommandManager.add(new VersionCommand());
     }
     protected static void started(){
         if(bot == null)
@@ -324,7 +307,7 @@ public class BotHandler {
         String cmd = m.replaceFirst(prefix,"");
         if(cmd.contains(" "))
             cmd = cmd.split(" ")[0];
-        for(String label : CommandManager.getCommandList()){
+        for(String label : CommandManager.getList()){
             if(label.equalsIgnoreCase(cmd))
                 return true;
         }
@@ -372,7 +355,6 @@ public class BotHandler {
             TSDiscordPlugin.getPlugin().sendDebug(channel);
             return;
         }
-        message = strip(message);
         Method method;
         Object censored = null;
         if(TSDiscordPlugin.getCensorPlugin() != null) {
@@ -409,12 +391,6 @@ public class BotHandler {
     }
     public static boolean isEnabled(){
         return bot != null;
-    }
-    public static String strip(String message){
-        while (message.startsWith(">")){
-            message = message.replaceFirst(">","");
-        }
-        return message;
     }
     public static void sendWebhook(String webhookId, String message, String name, String avatarUrl, Message original){
         validateWebhook(webhookId).whenComplete((hook,error)->{

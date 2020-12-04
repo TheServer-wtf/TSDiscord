@@ -168,7 +168,6 @@ public class DiscordListener implements Listener, MessageCreateListener {
             if(plugin.getConfig().getBoolean("hexColor",false)){
                 chatFormat = getHexColors(chatFormat);
             }
-            //plugin.getServer().getConsoleSender().sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+format(event.getMessage()));
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),event.getUser(),event.getMessage()));
             Field field = null;
             Object censObj = null;
@@ -192,7 +191,6 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 }
                 String send = (censored == null) ? message : (String)censored;
                 send = format(ChatColor.stripColor(send));
-                //p.sendMessage(c("&8[&eDISCORD&8] &a"+event.getUser()+": &f")+send);
                 p.sendMessage(String.format(c(chatFormat),event.getUser(),send));
             }
         }

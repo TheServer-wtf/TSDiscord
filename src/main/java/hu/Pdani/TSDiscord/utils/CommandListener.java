@@ -70,7 +70,7 @@ public class CommandListener implements CommandExecutor, MessageCreateListener {
         ArrayList<String> add = new ArrayList<>(Arrays.asList(message.split(" ")));
         String label = add.remove(0).replaceFirst(">","");
         List<String> args = message.contains(" ") ? add : new ArrayList<>();
-        ProgramCommand programCommand = CommandManager.getCommand(label);
+        ProgramCommand programCommand = CommandManager.get(label);
         if(programCommand != null){
             programCommand.run(author,gmre.getChannel(),gmre.getServer().orElse(null),args);
         }
