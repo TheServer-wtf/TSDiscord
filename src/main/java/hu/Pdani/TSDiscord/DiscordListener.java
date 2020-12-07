@@ -12,7 +12,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.Role;
@@ -189,22 +188,21 @@ public class DiscordListener implements Listener, MessageCreateListener {
                         censored = null;
                     }
                 }
-                String send = (censored == null) ? message : (String)censored;
-                send = format(ChatColor.stripColor(send));
-                p.sendMessage(String.format(c(chatFormat),event.getUser(),send));
+                String format = (censored == null) ? message : (String)censored;
+                p.sendMessage(String.format(c(chatFormat),event.getUser(),format(ChatColor.stripColor(format))));
             }
         }
     }
 
     private String format(String message){
-        message = message.replace("\\*\\*\\*(.+)\\*\\*\\*","&l&o$1&r");
-        message = message.replace("\\*\\*(.+)\\*\\*","&l$1&r");
-        message = message.replace("\\*(.+)\\*","&o$1&r");
-        message = message.replace("___(.+)___","&o&n$1&r");
-        message = message.replace("__(.+)__","&n$1&r");
-        message = message.replace("_(.+)_","&o$1&r");
-        message = message.replace("~~(.+)~~","&m$1&r");
-        return ChatColor.translateAlternateColorCodes('&',message);
+        message = message.replaceAll("\\*\\*\\*(.+?)\\*\\*\\*",ChatColor.ITALIC+""+ChatColor.BOLD+"$1"+ChatColor.RESET);
+        message = message.replaceAll("\\*\\*(.+?)\\*\\*",ChatColor.BOLD+"$1"+ChatColor.RESET);
+        message = message.replaceAll("\\*(.+?)\\*",ChatColor.ITALIC+"$1"+ChatColor.RESET);
+        message = message.replaceAll("___(.+?)___",ChatColor.ITALIC+""+ChatColor.UNDERLINE+"$1"+ChatColor.RESET);
+        message = message.replaceAll("__(.+?)__",ChatColor.UNDERLINE+"$1"+ChatColor.RESET);
+        message = message.replaceAll("_(.+?)_",ChatColor.ITALIC+"$1"+ChatColor.RESET);
+        message = message.replaceAll("~~(.+?)~~",ChatColor.STRIKETHROUGH+"$1"+ChatColor.RESET);
+        return message;
     }
 
     private String getHexColors(String text){
