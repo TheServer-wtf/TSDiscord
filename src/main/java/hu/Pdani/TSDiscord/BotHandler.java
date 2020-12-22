@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
+
 public class BotHandler {
     private static DiscordApi bot;
     public static boolean shutdown = false;
@@ -325,8 +327,18 @@ public class BotHandler {
         if(TSDiscordPlugin.getVaultPerms() != null) {
             group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
         }
-        if(group != null)
-            player += " ["+group+"]";
+        String userPrefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerPrefix(null,user)));
+        String userSuffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerSuffix(null,user)));
+        if(group != null) {
+            //player += " [" + group + "]";
+            String prefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupPrefix(user.getWorld(),group)));
+            String suffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupSuffix(user.getWorld(),group)));
+            player = (!userPrefix.isEmpty()) ? userPrefix + player : prefix + player;
+            player += (!userSuffix.isEmpty()) ? userSuffix : suffix;
+        } else {
+            player = (!userPrefix.isEmpty()) ? userPrefix + player : "" + player;
+            player += (!userSuffix.isEmpty()) ? userSuffix : "";
+        }
         FileConfiguration important = ImportantConfig.getConfig();
         String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
         String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature","");
