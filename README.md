@@ -3,7 +3,7 @@
 
 **_Created by Pdani001_**
 
-**This plugin can hook into mikemik44's OptionalCensor plugin.**
+**This plugin can hook into mikemik44's TogglableCensor plugin.**
 ***
 ### Commands:
 - **/tsdiscord [debug]**

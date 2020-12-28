@@ -1,6 +1,9 @@
 package hu.Pdani.TSDiscord;
 
+import com.mikemik44.censor.Censor;
+import com.mikemik44.censor.Test;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
+import hu.Pdani.TSDiscord.utils.SwearUtil;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
@@ -20,9 +23,6 @@ import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -100,27 +100,12 @@ public class DiscordListener implements Listener, MessageCreateListener {
         }
         TSDiscordPlugin.getPlugin().sendDebug("Message received!");
         boolean isMature = gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.mature",""));
-        if(!isMature && plugin.checkSwearing(message)){
+        if(!isMature && SwearUtil.checkSwearing(message)){
             String hook = ImportantConfig.getConfig().getString("webhooks."+gmre.getChannel().getIdAsString(),"");
             if(!hook.isEmpty()) {
-                Object censored = null;
-                if(plugin.getCPlugin() != null) {
-                    try {
-                        Method method = plugin.getCPlugin().getClass().getDeclaredMethod("convert", String.class, Integer.class);
-                        if (!method.isAccessible()) {
-                            method.setAccessible(true);
-                            censored = method.invoke(plugin.getCPlugin(), message, 2);
-                            method.setAccessible(false);
-                        } else {
-                            censored = method.invoke(plugin.getCPlugin(), message, 2);
-                        }
-                    } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
-                        plugin.getLogger().severe("There was an error trying to censor the message: " + ex.toString());
-                        plugin.sendDebug("There was an error trying to censor the message: " + ex.toString());
-                    }
-                }
+                String censored = Censor.censor(message,true,false);
                 if(censored != null)
-                    BotHandler.sendWebhook(hook, (String)censored,author.getDisplayName(),author.getAvatar().getUrl().toString(),msg);
+                    BotHandler.sendWebhook(hook, censored, author.getDisplayName(), author.getAvatar().getUrl().toString(), msg);
             }
             Server guild = gmre.getServer().orElse(null);
             User member = author.asUser().orElse(null);
@@ -143,52 +128,36 @@ public class DiscordListener implements Listener, MessageCreateListener {
         Set<Player> players = new HashSet<>(plugin.getServer().getOnlinePlayers());
         DiscordChatEvent event = new DiscordChatEvent(author.getDisplayName(), author.getIdAsString(), message, players);
         plugin.getServer().getPluginManager().callEvent(event);
-        boolean censorError = false;
-        Method method = null;
-        Object censored = null;
-        if(plugin.getCPlugin() != null) {
-            try {
-                method = plugin.getCPlugin().getClass().getDeclaredMethod("convert", String.class, Integer.class);
-                if (!method.isAccessible()) {
-                    method.setAccessible(true);
-                }
-            } catch (NoSuchMethodException | SecurityException ex) {
-                plugin.getLogger().severe("There was an error trying to censor the message: " + ex.toString());
-                plugin.sendDebug("There was an error trying to censor the message: " + ex.toString());
-            }
-        }
+        String censored = null;
+        boolean allowCensor = plugin.getCPlugin() != null;
         if(!event.isCancelled()){
             String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
             if(chatFormat == null || chatFormat.isEmpty())
                 chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
-            chatFormat = chatFormat.replace("{user}","%s");
-            chatFormat = chatFormat.replace("{msg}","%s");
+            chatFormat = chatFormat.replace("{user}","%1$s");
+            chatFormat = chatFormat.replace("{msg}","%2$s");
             chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
             if(plugin.getConfig().getBoolean("hexColor",false)){
                 chatFormat = getHexColors(chatFormat);
             }
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),event.getUser(),event.getMessage()));
-            Field field = null;
-            Object censObj = null;
-            HashMap<String, Double> cens = new HashMap<>();
             for(Player p : event.getPlayers()){
-                if(!censorError && method != null) {
-                    try {
-                        if(field == null){
-                            field = plugin.getCPlugin().getClass().getDeclaredField("cens");
-                            field.setAccessible(true);
-                            censObj = field.get(plugin.getCPlugin());
-                            cens = (HashMap<String, Double>) censObj;
-                        }
-                        censored = method.invoke(plugin.getCPlugin(), message, Integer.parseInt(cens.get(p.getUniqueId().toString()).toString().split("\\.")[0]));
-                    } catch (IllegalAccessException | InvocationTargetException | NoSuchFieldException | SecurityException ex) {
-                        plugin.getLogger().severe("There was an error trying to censor the message: " + ex.toString());
-                        plugin.sendDebug("There was an error trying to censor the message: " + ex.toString());
-                        censorError = true;
-                        censored = null;
+                if(allowCensor) {
+                    int mode = plugin.getCPlugin().getPlayerMode(p.getUniqueId().toString());
+                    switch (mode){
+                        case 0:
+                            censored = Censor.censor(message,false,false);
+                            break;
+                        case 2:
+                            censored = Censor.censor(message,true,true);
+                            break;
+                        case 1:
+                        default:
+                            censored = Censor.censor(message,true,false);
+                            break;
                     }
                 }
-                String format = (censored == null) ? message : (String)censored;
+                String format = (censored == null) ? message : censored;
                 p.sendMessage(String.format(c(chatFormat),event.getUser(),format(ChatColor.stripColor(format))));
             }
         }

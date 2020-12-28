@@ -1,6 +1,6 @@
 package hu.Pdani.TSDiscord;
 
-import com.mikemik44.main.Main;
+import com.mikemik44.censor.Test;
 import hu.Pdani.TSDiscord.utils.CommandListener;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.SwearUtil;
@@ -27,7 +27,7 @@ public class TSDiscordPlugin extends JavaPlugin {
     protected static DiscordListener dl;
     protected static CommandListener cl;
     private static TSDiscordPlugin plugin;
-    private static Main censorPlugin;
+    private static Test censorPlugin;
     public static double tps = 0.00;
     private static Permission perms = null;
     private static Chat chat = null;
@@ -60,9 +60,9 @@ public class TSDiscordPlugin extends JavaPlugin {
             getLogger().warning("Bot token or prefix is empty!");
         }
         getCommand("tsdiscord").setExecutor(cl);
-        Plugin cp = getServer().getPluginManager().getPlugin("OptionalCensor-mikemik44");
-        if(cp instanceof Main)
-            censorPlugin = (Main) cp;
+        Plugin cp = getServer().getPluginManager().getPlugin("ToggableCensor-Mikemik44");
+        if(cp instanceof Test)
+            censorPlugin = (Test) cp;
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
         if(vault != null){
             setupPermissions();
@@ -143,10 +143,10 @@ public class TSDiscordPlugin extends JavaPlugin {
         return plugin;
     }
 
-    public static Main getCensorPlugin() {
+    public static Test getCensorPlugin() {
         return censorPlugin;
     }
-    public Main getCPlugin() {
+    public Test getCPlugin() {
         return getCensorPlugin();
     }
 
@@ -209,20 +209,5 @@ public class TSDiscordPlugin extends JavaPlugin {
         if(id == -1){
             getLogger().severe("Failed to check for new version: Unable to schedule task.");
         }
-    }
-
-    /**
-     * @deprecated use {@link SwearUtil#checkSwearing} instead
-     * @param data The message
-     * @return true if the message contains swearing
-     */
-    @Deprecated
-    protected boolean checkSwearing(String data){
-        HashMap<String,ArrayList<String>> censor = new HashMap<>();
-        censor.put("allow",censorPlugin.allow);
-        censor.put("repl",censorPlugin.repl);
-        censor.put("blocked",censorPlugin.blocked);
-        censor.put("words",censorPlugin.words);
-        return SwearUtil.checkSwearing(censor,data);
     }
 }

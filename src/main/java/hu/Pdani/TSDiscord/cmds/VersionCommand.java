@@ -25,14 +25,14 @@ public class VersionCommand implements ProgramCommand {
             }
         }
         builder.setTitle("TSDiscord");
-        builder.addField("","Discord<->MC link plugin");
+        builder.addField("A","Discord<->MC link plugin",true);
         builder.addField("Made by",maker.toString());
         builder.addField("Version",plugin.getDescription().getVersion());
         String timeFormat = plugin.getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
         builder.setFooter(formatter.format(date));
-        channel.sendMessage(builder);
+        channel.sendMessage(builder).join();
     }
 
     @Override
