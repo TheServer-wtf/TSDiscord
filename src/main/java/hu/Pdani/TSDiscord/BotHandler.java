@@ -323,7 +323,7 @@ public class BotHandler {
         boolean modify = false;
         String player = ChatColor.stripColor(user.getDisplayName());
         String group = null;
-        String avatar = "https://minotar.net/helm/"+user.getName()+"/300.png";
+        String avatar = "https://minotar.net/helm/"+user.getName()+"/300.png?v="+(System.currentTimeMillis()/1000);
         if(TSDiscordPlugin.getVaultPerms() != null) {
             group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
         }
