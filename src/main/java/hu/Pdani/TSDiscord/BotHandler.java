@@ -2,6 +2,7 @@ package hu.Pdani.TSDiscord;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import com.mikemik44.censor.Censor;
 import hu.Pdani.TSDiscord.cmds.OnlineCommand;
 import hu.Pdani.TSDiscord.cmds.TPSCommand;
 import hu.Pdani.TSDiscord.cmds.VersionCommand;
@@ -22,8 +23,6 @@ import org.javacord.api.entity.webhook.Webhook;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -367,21 +366,8 @@ public class BotHandler {
             TSDiscordPlugin.getPlugin().sendDebug(channel);
             return;
         }
-        Method method;
-        Object censored = null;
-        if(TSDiscordPlugin.getCensorPlugin() != null) {
-            try {
-                method = TSDiscordPlugin.getCensorPlugin().getClass().getDeclaredMethod("convert", String.class, Integer.class);
-                if (!method.isAccessible()) {
-                    method.setAccessible(true);
-                }
-                censored = method.invoke(TSDiscordPlugin.getCensorPlugin(), message, 2);
-            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
-                TSDiscordPlugin.getPlugin().getLogger().severe("There was an error trying to censor the message: " + ex.toString());
-                censored = null;
-            }
-        }
-        message = (censored == null) ? message : (String) censored;
+        String censored = Censor.censor(message,true,false);
+        message = (censored == null) ? message : censored;
         String hookId = important.getString("webhooks."+tc.getId(),"");
         if(!hookId.isEmpty()) {
             sendWebhook(hookId,message,player,avatar);

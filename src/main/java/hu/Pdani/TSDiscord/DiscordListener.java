@@ -1,7 +1,6 @@
 package hu.Pdani.TSDiscord;
 
 import com.mikemik44.censor.Censor;
-import com.mikemik44.censor.Test;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.SwearUtil;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -24,7 +23,11 @@ import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,6 +72,8 @@ public class DiscordListener implements Listener, MessageCreateListener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e){
+        if(e == null || e.getRecipients().size() < TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size())
+            return;
         if(!e.isCancelled())
             BotHandler.chat(e.getPlayer(),e.getMessage());
         else
