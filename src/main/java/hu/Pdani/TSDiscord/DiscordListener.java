@@ -74,10 +74,9 @@ public class DiscordListener implements Listener, MessageCreateListener {
     public void onChat(AsyncPlayerChatEvent e){
         if(e == null || e.getRecipients().size() < TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size())
             return;
+        TSDiscordPlugin.getPlugin().sendDebug("PlayerChatEvent received!");
         if(!e.isCancelled())
             BotHandler.chat(e.getPlayer(),e.getMessage());
-        else
-            TSDiscordPlugin.getPlugin().sendDebug("PlayerChatEvent was cancelled");
     }
 
     @Override
@@ -130,41 +129,36 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 }
             }
         }
-        Set<Player> players = new HashSet<>(plugin.getServer().getOnlinePlayers());
-        DiscordChatEvent event = new DiscordChatEvent(author.getDisplayName(), author.getIdAsString(), message, players);
-        plugin.getServer().getPluginManager().callEvent(event);
         String censored = null;
         boolean allowCensor = plugin.getCPlugin() != null;
-        if(!event.isCancelled()){
-            String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
-            if(chatFormat == null || chatFormat.isEmpty())
-                chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
-            chatFormat = chatFormat.replace("{user}","%1$s");
-            chatFormat = chatFormat.replace("{msg}","%2$s");
-            chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
-            if(plugin.getConfig().getBoolean("hexColor",false)){
-                chatFormat = getHexColors(chatFormat);
-            }
-            plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),event.getUser(),event.getMessage()));
-            for(Player p : event.getPlayers()){
-                if(allowCensor) {
-                    int mode = plugin.getCPlugin().getPlayerMode(p.getUniqueId().toString());
-                    switch (mode){
-                        case 0:
-                            censored = Censor.censor(message,false,false);
-                            break;
-                        case 2:
-                            censored = Censor.censor(message,true,true);
-                            break;
-                        case 1:
-                        default:
-                            censored = Censor.censor(message,true,false);
-                            break;
-                    }
+        String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
+        if(chatFormat == null || chatFormat.isEmpty())
+            chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
+        chatFormat = chatFormat.replace("{user}","%1$s");
+        chatFormat = chatFormat.replace("{msg}","%2$s");
+        chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
+        if(plugin.getConfig().getBoolean("hexColor",false)){
+            chatFormat = getHexColors(chatFormat);
+        }
+        plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
+        for(Player p : plugin.getServer().getOnlinePlayers()){
+            if(allowCensor) {
+                int mode = plugin.getCPlugin().getPlayerMode(p.getUniqueId().toString());
+                switch (mode){
+                    case 0:
+                        censored = Censor.censor(message,false,false);
+                        break;
+                    case 2:
+                        censored = Censor.censor(message,true,true);
+                        break;
+                    case 1:
+                    default:
+                        censored = Censor.censor(message,true,false);
+                        break;
                 }
-                String format = (censored == null) ? message : censored;
-                p.sendMessage(String.format(c(chatFormat),event.getUser(),format(ChatColor.stripColor(format))));
             }
+            String format = (censored == null) ? message : censored;
+            p.sendMessage(String.format(c(chatFormat),author.getDisplayName(),format(ChatColor.stripColor(format))));
         }
     }
 

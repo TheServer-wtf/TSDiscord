@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.13.5</version>
+    <version>0.13.6</version>
     <properties>
         <mainClass>${project.groupId}.${project.artifactId}.${project.artifactId}Plugin</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -43,6 +43,10 @@
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.intellij</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -54,7 +58,7 @@
         <dependency>
             <groupId>club.minnced</groupId>
             <artifactId>discord-webhooks</artifactId>
-            <version>LATEST</version>
+            <version>0.5.4</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -62,6 +66,12 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.11</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations-java5</artifactId>
+            <version>19.0.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

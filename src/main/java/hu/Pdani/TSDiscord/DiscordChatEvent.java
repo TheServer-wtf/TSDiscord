@@ -4,9 +4,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-
+import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
+@Deprecated
 public class DiscordChatEvent extends Event implements Cancellable {
     private boolean isCancelled;
     private static final HandlerList HANDLERS = new HandlerList();
@@ -15,6 +16,7 @@ public class DiscordChatEvent extends Event implements Cancellable {
     private String message;
     private Set<Player> players;
 
+    @Deprecated
     public DiscordChatEvent(String user, String message, Set<Player> players){
         super(true);
         this.user = user;
@@ -23,6 +25,7 @@ public class DiscordChatEvent extends Event implements Cancellable {
         this.players = players;
     }
 
+    @Deprecated
     public DiscordChatEvent(String user, String userId, String message, Set<Player> players){
         super(true);
         this.user = user;
@@ -51,6 +54,7 @@ public class DiscordChatEvent extends Event implements Cancellable {
     }
 
     @Override
+    @NotNull
     public HandlerList getHandlers() {
         return HANDLERS;
     }
