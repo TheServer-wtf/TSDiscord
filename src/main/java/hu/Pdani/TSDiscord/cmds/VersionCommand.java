@@ -25,7 +25,7 @@ public class VersionCommand implements ProgramCommand {
             }
         }
         builder.setTitle("TSDiscord");
-        builder.addField("A","Discord<->MC link plugin",true);
+        builder.setDescription("Discord<->MC link plugin");
         builder.addField("Made by",maker.toString());
         builder.addField("Version",plugin.getDescription().getVersion());
         String timeFormat = plugin.getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");

@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
 public class BotHandler {
+    private static String DEF_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay&v=%2$d";
     private static DiscordApi bot;
     public static boolean shutdown = false;
     public static int task = -1;
@@ -322,7 +323,8 @@ public class BotHandler {
         boolean modify = false;
         String player = ChatColor.stripColor(user.getDisplayName());
         String group = null;
-        String avatar = "https://minotar.net/helm/"+user.getName()+"/300.png?v="+(System.currentTimeMillis()/1000);
+        //String avatar = "https://minotar.net/helm/"+user.getName()+"/300.png?v="+(System.currentTimeMillis()/1000);
+        String avatar = String.format(DEF_AVATAR,user.getUniqueId().toString(),(System.currentTimeMillis()/1000));
         if(TSDiscordPlugin.getVaultPerms() != null) {
             group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
         }
@@ -403,7 +405,7 @@ public class BotHandler {
             if(avatarUrl != null)
                 builder.setAvatarUrl(avatarUrl);
             else
-                builder.setAvatarUrl("https://minotar.net/helm/"+name+"/300.png?v="+System.nanoTime());
+                builder.setAvatarUrl(String.format(DEF_AVATAR,"MHF_ALEX",(System.currentTimeMillis()/1000)));
             builder.setContent(message);
             List<MessageAttachment> attachments = original != null ? original.getAttachments() : null;
             if(attachments != null && !attachments.isEmpty()){

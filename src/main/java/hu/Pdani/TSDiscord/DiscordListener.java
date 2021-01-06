@@ -4,6 +4,7 @@ import com.mikemik44.censor.Censor;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.SwearUtil;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -24,9 +25,7 @@ import org.javacord.api.listener.message.MessageCreateListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -141,7 +140,8 @@ public class DiscordListener implements Listener, MessageCreateListener {
             chatFormat = getHexColors(chatFormat);
         }
         plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
-        for(Player p : plugin.getServer().getOnlinePlayers()){
+        StringBuilder sent = new StringBuilder();
+        for(Player p : Bukkit.getOnlinePlayers()){
             if(allowCensor) {
                 int mode = plugin.getCPlugin().getPlayerMode(p.getUniqueId().toString());
                 switch (mode){
@@ -159,7 +159,11 @@ public class DiscordListener implements Listener, MessageCreateListener {
             }
             String format = (censored == null) ? message : censored;
             p.sendMessage(String.format(c(chatFormat),author.getDisplayName(),format(ChatColor.stripColor(format))));
+            if(sent.length() > 0)
+                sent.append(", ");
+            sent.append(p.getName());
         }
+        plugin.sendDebug("Sent message to: "+sent);
     }
 
     private String format(String message){

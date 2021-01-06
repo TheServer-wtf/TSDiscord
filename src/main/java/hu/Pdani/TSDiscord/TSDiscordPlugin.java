@@ -169,9 +169,9 @@ public class TSDiscordPlugin extends JavaPlugin {
     }
 
     public void sendDebug(String msg){
-        debug.forEach((target)->{
-            target.sendMessage(msg);
-        });
+        debug.forEach((target)->target.sendMessage(msg));
+        if(getConfig().getBoolean("consoleDebug",false))
+            getLogger().info(msg);
     }
 
     private void startTps(){
