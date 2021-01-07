@@ -69,10 +69,22 @@ public class DiscordListener implements Listener, MessageCreateListener {
         }
     }
 
+    boolean alreadySent = false;
+
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e){
         if(e == null || e.getRecipients().size() < TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size())
             return;
+        if(plugin.getServer().getOnlinePlayers().size() == 1){
+            if(alreadySent) {
+                alreadySent = false;
+                return;
+            } else {
+                alreadySent = true;
+            }
+        } else {
+            alreadySent = false;
+        }
         TSDiscordPlugin.getPlugin().sendDebug("PlayerChatEvent received!");
         if(!e.isCancelled())
             BotHandler.chat(e.getPlayer(),e.getMessage());
@@ -139,6 +151,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
         if(plugin.getConfig().getBoolean("hexColor",false)){
             chatFormat = getHexColors(chatFormat);
         }
+        message = getMentionNicks(message,gmre.getServer().orElse(null), msg.getMentionedUsers());
         plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
         StringBuilder sent = new StringBuilder();
         for(Player p : Bukkit.getOnlinePlayers()){
@@ -183,6 +196,28 @@ public class DiscordListener implements Listener, MessageCreateListener {
         StringBuffer result = new StringBuffer();
         while (matcher.find()) {
             matcher.appendReplacement(result, net.md_5.bungee.api.ChatColor.of(matcher.group()).toString());
+        }
+        matcher.appendTail(result);
+        text = result.toString();
+        return text;
+    }
+
+    private String getMentionNicks(String text, Server server, List<User> mentioned){
+        Pattern hexPattern = Pattern.compile("<@!([0-9]+)>");
+        Matcher matcher = hexPattern.matcher(text);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            User user = null;
+            for(User m : mentioned) {
+                if(m.getIdAsString().equals(matcher.group(1))){
+                    user = m;
+                    break;
+                }
+            }
+            if(user == null)
+                continue;
+            String nick = server != null ? "@"+user.getDisplayName(server) : user.getNicknameMentionTag();
+            matcher.appendReplacement(result, nick);
         }
         matcher.appendTail(result);
         text = result.toString();

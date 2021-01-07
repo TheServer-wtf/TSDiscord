@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.13.7</version>
+    <version>0.13.8</version>
     <properties>
         <mainClass>${project.groupId}.${project.artifactId}.${project.artifactId}Plugin</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,7 +16,7 @@
         <dependency>
             <groupId>com.mikemik44</groupId>
             <artifactId>censorplugin</artifactId>
-            <version>0.2</version>
+            <version>0.3</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/TogglableCensor.jar</systemPath>
         </dependency>
