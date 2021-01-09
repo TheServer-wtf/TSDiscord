@@ -19,9 +19,11 @@ public class OnlineCommand implements ProgramCommand {
         int max = TSDiscordPlugin.getPlugin().getServer().getMaxPlayers();
         Stream<? extends Player> players = TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().stream();
         MessageBuilder builder = new MessageBuilder();
-        builder.append("Online players ("+online+"/"+max+"):")
-                .appendNewLine()
-                .appendCode("",players.map(Player::getName).collect(Collectors.joining(", ")));
+        builder.append("Online players ("+online+"/"+max+")");
+        if(online > 0)
+            builder.append(":")
+                    .appendNewLine()
+                    .appendCode("",players.map(Player::getName).collect(Collectors.joining(", ")));
         builder.send(channel);
     }
 
