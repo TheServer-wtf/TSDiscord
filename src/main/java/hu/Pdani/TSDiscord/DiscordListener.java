@@ -39,6 +39,11 @@ public class DiscordListener implements Listener, MessageCreateListener {
         this.plugin = plugin;
     }
 
+    public String escapeName(String name){
+        name = name.replaceAll("_(.+?)_","\\_$1\\_");
+        return name;
+    }
+
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
         if(!BotHandler.isEnabled() || BotHandler.shutdown)
@@ -47,10 +52,10 @@ public class DiscordListener implements Listener, MessageCreateListener {
         String channel = plugin.getConfig().getString("channels.main","");
         String mature = plugin.getConfig().getString("channels.mature","");
         if(!channel.isEmpty()) {
-            plugin.getBot().getTextChannelById(channel).ifPresent(tc -> tc.sendMessage(join.replace("%player%", event.getPlayer().getName())).join());
+            plugin.getBot().getTextChannelById(channel).ifPresent(tc -> tc.sendMessage(join.replace("%player%", escapeName(event.getPlayer().getName()))).join());
         }
         if(!mature.isEmpty()) {
-            plugin.getBot().getTextChannelById(mature).ifPresent(tc -> tc.sendMessage(join.replace("%player%", event.getPlayer().getName())).join());
+            plugin.getBot().getTextChannelById(mature).ifPresent(tc -> tc.sendMessage(join.replace("%player%", escapeName(event.getPlayer().getName()))).join());
         }
     }
 
@@ -62,10 +67,10 @@ public class DiscordListener implements Listener, MessageCreateListener {
         String channel = plugin.getConfig().getString("channels.main","");
         String mature = plugin.getConfig().getString("channels.mature","");
         if(!channel.isEmpty()) {
-            plugin.getBot().getTextChannelById(channel).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", event.getPlayer().getName())).join());
+            plugin.getBot().getTextChannelById(channel).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", escapeName(event.getPlayer().getName()))).join());
         }
         if(!mature.isEmpty()) {
-            plugin.getBot().getTextChannelById(mature).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", event.getPlayer().getName())).join());
+            plugin.getBot().getTextChannelById(mature).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", escapeName(event.getPlayer().getName()))).join());
         }
     }
 
