@@ -183,8 +183,8 @@
                                     <shadedPattern>hu.Pdani.TSDiscord.libs.okio</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>org.apache.commons</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.apache.commons</shadedPattern>
+                                    <pattern>org.apache.commons.lang3</pattern>
+                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.apache.commons.lang3</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.bouncycastle</pattern>
@@ -211,6 +211,9 @@
                                     <shadedPattern>hu.Pdani.TSDiscord.libs.org.slf4j</shadedPattern>
                                 </relocation>
                             </relocations>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
                         </configuration>
                     </execution>
                 </executions>

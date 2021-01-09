@@ -370,6 +370,8 @@ public class BotHandler {
         }
         String censored = Censor.censor(message,true,false);
         message = (censored == null) ? message : censored;
+        censored = Censor.censor(player,true,false);
+        player = (censored == null) ? player : censored;
         String hookId = important.getString("webhooks."+tc.getId(),"");
         if(!hookId.isEmpty()) {
             sendWebhook(hookId,message,player,avatar);
