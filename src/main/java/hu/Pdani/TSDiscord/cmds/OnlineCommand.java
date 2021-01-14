@@ -22,7 +22,6 @@ public class OnlineCommand implements ProgramCommand {
         builder.append("Online players ("+online+"/"+max+")");
         if(online > 0)
             builder.append(":")
-                    .appendNewLine()
                     .appendCode("",players.map(Player::getName).collect(Collectors.joining(", ")));
         builder.send(channel);
     }
