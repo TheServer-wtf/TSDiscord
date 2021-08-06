@@ -326,7 +326,10 @@ public class BotHandler {
         //String avatar = "https://minotar.net/helm/"+user.getName()+"/300.png?v="+(System.currentTimeMillis()/1000);
         String avatar = String.format(DEF_AVATAR,user.getUniqueId().toString(),(System.currentTimeMillis()/1000));
         if(TSDiscordPlugin.getVaultPerms() != null) {
-            group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
+            try {
+                group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
+            } catch (Exception e){
+            }
         }
         String userPrefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerPrefix(null,user)));
         String userSuffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerSuffix(null,user)));
@@ -368,9 +371,12 @@ public class BotHandler {
             TSDiscordPlugin.getPlugin().sendDebug(channel);
             return;
         }
-        String censored = Censor.censor(message,true,false);
+        String censored = null;
+        if(TSDiscordPlugin.getCensorPlugin() != null)
+            censored = Censor.censor(message,true,false);
         message = (censored == null) ? message : censored;
-        censored = Censor.censor(player,true,false);
+        if(TSDiscordPlugin.getCensorPlugin() != null)
+            censored = Censor.censor(player,true,false);
         player = (censored == null) ? player : censored;
         String hookId = important.getString("webhooks."+tc.getId(),"");
         if(!hookId.isEmpty()) {

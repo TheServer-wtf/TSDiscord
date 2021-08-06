@@ -15,6 +15,7 @@ import org.javacord.api.listener.message.MessageCreateListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class CommandListener implements CommandExecutor, MessageCreateListener {
     @Override
@@ -67,8 +68,11 @@ public class CommandListener implements CommandExecutor, MessageCreateListener {
                 || !BotHandler.hasCommand(message)) {
             return;
         }
+        String prefix = plugin.getConfig().getString("prefix",">");
+        if(prefix == null)
+            prefix = ">";
         ArrayList<String> add = new ArrayList<>(Arrays.asList(message.split(" ")));
-        String label = add.remove(0).replaceFirst(">","");
+        String label = add.remove(0).replaceFirst(Pattern.quote(prefix),"");
         List<String> args = message.contains(" ") ? add : new ArrayList<>();
         ProgramCommand programCommand = CommandManager.get(label);
         if(programCommand != null){

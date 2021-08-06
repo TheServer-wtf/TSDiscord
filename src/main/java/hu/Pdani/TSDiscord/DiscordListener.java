@@ -77,7 +77,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e){
-        if(e == null || e.getRecipients().size() < TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size())
+        if(e == null || e.getRecipients().size() < TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size() || e.getMessage().contains("⋔"))
             return;
         if(lastEvent != null){
             if(lastEvent.getMessage().equals(e.getMessage()) && lastEvent.getPlayer().getName().equals(e.getPlayer().getName())) {
