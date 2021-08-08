@@ -3,7 +3,7 @@ package hu.Pdani.TSDiscord;
 import com.mikemik44.censor.Test;
 import hu.Pdani.TSDiscord.utils.CommandListener;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
-import hu.Pdani.TSDiscord.utils.SwearUtil;
+import hu.Pdani.TSDiscord.utils.ServiceListener;
 import hu.Pdani.TSDiscord.utils.Updater;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
@@ -18,7 +18,6 @@ import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -32,6 +31,7 @@ public class TSDiscordPlugin extends JavaPlugin {
     private static Permission perms = null;
     private static Chat chat = null;
     public ArrayList<Player> debug = new ArrayList<>();
+    private int vaultTask = -1;
 
     @Override
     public void onEnable() {
@@ -56,6 +56,7 @@ public class TSDiscordPlugin extends JavaPlugin {
             });
             dl = new DiscordListener(this);
             getServer().getPluginManager().registerEvents(dl,this);
+            getServer().getPluginManager().registerEvents(new ServiceListener(),this);
         } else {
             getLogger().warning("Bot token or prefix is empty!");
         }
@@ -71,6 +72,21 @@ public class TSDiscordPlugin extends JavaPlugin {
         getLogger().info("The plugin is now enabled.");
     }
 
+    public static void refreshVault(Class<?> service) {
+        if(service == Chat.class) {
+            Chat vaultChat = plugin.getServer().getServicesManager().load(Chat.class);
+            if (vaultChat != chat) {
+                plugin.getLogger().info("New Vault Chat implementation registered: " + (vaultChat == null ? "null" : vaultChat.getName()));
+            }
+            chat = vaultChat;
+        } else if(service == Permission.class) {
+            Permission vaultPerms = plugin.getServer().getServicesManager().load(Permission.class);
+            if (vaultPerms != perms) {
+                plugin.getLogger().info("New Vault Permission implementation registered: " + (vaultPerms == null ? "null" : vaultPerms.getName()));
+            }
+            perms = vaultPerms;
+        }
+    }
     private void setupPermissions() {
         RegisteredServiceProvider<Permission> rsp = getServer().getServicesManager().getRegistration(Permission.class);
         if(rsp == null)

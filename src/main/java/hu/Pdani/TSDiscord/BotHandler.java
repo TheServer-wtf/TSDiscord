@@ -331,9 +331,14 @@ public class BotHandler {
             } catch (Exception e){
             }
         }
-        String userPrefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerPrefix(null,user)));
-        String userSuffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerSuffix(null,user)));
-        if(group != null) {
+        String userPrefix = "";
+        String userSuffix = "";
+
+        if(TSDiscordPlugin.getVaultChat() != null) {
+            userPrefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerPrefix(null, user)));
+            userSuffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerSuffix(null, user)));
+        }
+        if(group != null && TSDiscordPlugin.getVaultChat() != null) {
             //player += " [" + group + "]";
             String prefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupPrefix(user.getWorld(),group)));
             String suffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupSuffix(user.getWorld(),group)));
