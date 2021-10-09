@@ -180,7 +180,12 @@ public class BotHandler {
                 TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(c).orElse(null);
                 if (tc != null) {
                     FileConfiguration important = ImportantConfig.getConfig();
+                    boolean oldId = false;
                     String statusId = important.getString("statusId." + c, "");
+                    if(important.isString("statusId")) {
+                        oldId = true;
+                        statusId = important.getString("statusId");
+                    }
                     EmbedBuilder embed = new EmbedBuilder();
                     String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title", "Current Server Status");
                     embed.setTitle(title);
@@ -193,14 +198,25 @@ public class BotHandler {
                     if (!statusId.isEmpty()) {
                         Message message = tc.getMessageById(statusId).join();
                         if (message == null) {
-                            important.set("statusId." + c, null);
+                            if(!oldId) {
+                                important.set("statusId." + c, null);
+                                try {
+                                    ImportantConfig.saveConfig();
+                                } catch (IOException e) {
+                                    TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
+                                }
+                                ImportantConfig.reloadConfig();
+                            }
+                            return;
+                        }
+                        if(oldId){
+                            important.set("statusId." + c, statusId);
                             try {
                                 ImportantConfig.saveConfig();
                             } catch (IOException e) {
                                 TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
                             }
                             ImportantConfig.reloadConfig();
-                            return;
                         }
                         message.edit(embed);
                     } else {
