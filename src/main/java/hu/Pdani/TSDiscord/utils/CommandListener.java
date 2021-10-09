@@ -47,25 +47,29 @@ public class CommandListener implements CommandExecutor, MessageCreateListener {
 
     @Override
     public void onMessageCreate(MessageCreateEvent gmre) {
-        TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
         if(BotHandler.shutdown) {
             return;
         }
         if(!gmre.isServerMessage())
             return;
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection("channels");
-        if(section != null) {
-            if(!gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.main",""))
-                    && !gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.mature","")))
-                return;
+        TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
+        boolean isList = plugin.getConfig().isList("channels.main");
+        String channel = plugin.getConfig().getString("channels.main","");
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = plugin.getConfig().getStringList("channels.main");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
         }
+        if(!channels.contains(gmre.getChannel().getIdAsString()))
+            return;
         Message msg = gmre.getMessage();
         MessageAuthor author = gmre.getMessageAuthor();
         if(author.isWebhook() || author.isBotUser() || author.isYourself())
             return;
         String message = msg.getReadableContent();
-        if(!BotHandler.isCommand(message)
-                || !BotHandler.hasCommand(message)) {
+        if(!BotHandler.hasCommand(message)) {
             return;
         }
         String prefix = plugin.getConfig().getString("prefix",">");

@@ -39,7 +39,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
     }
 
     public String escapeName(String name){
-        name = name.replaceAll("_(.+?)_","\\_$1\\_");
+        name = name.replaceAll("_","\\_");
         return name;
     }
 
@@ -48,13 +48,17 @@ public class DiscordListener implements Listener, MessageCreateListener {
         if(!BotHandler.isEnabled() || BotHandler.shutdown)
             return;
         String join = plugin.getConfig().getString("message.join","%player% joined the server.");
+        boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
-        String mature = plugin.getConfig().getString("channels.mature","");
-        if(!channel.isEmpty()) {
-            plugin.getBot().getTextChannelById(channel).ifPresent(tc -> tc.sendMessage(join.replace("%player%", escapeName(event.getPlayer().getName()))).join());
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = plugin.getConfig().getStringList("channels.main");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
         }
-        if(!mature.isEmpty()) {
-            plugin.getBot().getTextChannelById(mature).ifPresent(tc -> tc.sendMessage(join.replace("%player%", escapeName(event.getPlayer().getName()))).join());
+        if(!channels.isEmpty()) {
+            channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(join.replace("%player%", escapeName(event.getPlayer().getName()))).join()));
         }
     }
 
@@ -63,13 +67,17 @@ public class DiscordListener implements Listener, MessageCreateListener {
         if(!BotHandler.isEnabled() || BotHandler.shutdown)
             return;
         String quit = plugin.getConfig().getString("message.leave","%player% left the server.");
+        boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
-        String mature = plugin.getConfig().getString("channels.mature","");
-        if(!channel.isEmpty()) {
-            plugin.getBot().getTextChannelById(channel).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", escapeName(event.getPlayer().getName()))).join());
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = plugin.getConfig().getStringList("channels.main");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
         }
-        if(!mature.isEmpty()) {
-            plugin.getBot().getTextChannelById(mature).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", escapeName(event.getPlayer().getName()))).join());
+        if(!channels.isEmpty()) {
+            channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(quit.replace("%player%", escapeName(event.getPlayer().getName()))).join()));
         }
     }
 
@@ -97,25 +105,28 @@ public class DiscordListener implements Listener, MessageCreateListener {
         }
         if(!gmre.isServerMessage())
             return;
-        ConfigurationSection section = plugin.getConfig().getConfigurationSection("channels");
-        if(section != null) {
-            if(!gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.main",""))
-            && !gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.mature","")))
-                return;
+        boolean isList = plugin.getConfig().isList("channels.main");
+        String channel = plugin.getConfig().getString("channels.main","");
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = plugin.getConfig().getStringList("channels.main");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
         }
+        if(!channels.contains(gmre.getChannel().getIdAsString()))
+            return;
         Message msg = gmre.getMessage();
         MessageAuthor author = gmre.getMessageAuthor();
         String message = msg.getReadableContent();
         if(author.isWebhook() || author.isBotUser() || author.isYourself() || message.isEmpty())
             return;
-        if(BotHandler.isCommand(message)
-                && BotHandler.hasCommand(message)) {
+        if(BotHandler.hasCommand(message)) {
             TSDiscordPlugin.getPlugin().sendDebug("The message contains a valid command, skipping.");
             return;
         }
         TSDiscordPlugin.getPlugin().sendDebug("Message received!");
-        boolean isMature = gmre.getChannel().getIdAsString().equals(plugin.getConfig().getString("channels.mature",""));
-        if(!isMature && SwearUtil.checkSwearing(message)){
+        if(SwearUtil.checkSwearing(message)){
             String hook = ImportantConfig.getConfig().getString("webhooks."+gmre.getChannel().getIdAsString(),"");
             if(!hook.isEmpty()) {
                 String censored = Censor.censor(message,true,false);
@@ -125,19 +136,30 @@ public class DiscordListener implements Listener, MessageCreateListener {
             Server guild = gmre.getServer().orElse(null);
             User member = author.asUser().orElse(null);
             if(guild != null && member != null && !hasIgnoredRole(guild,member.getRoles(guild))) {
-                String log = plugin.getConfig().getString("channels.log", "");
-                TextChannel logChannel = plugin.getBot().getTextChannelById(log).orElse(null);
-                if (logChannel != null) {
-                    EmbedBuilder embed = new EmbedBuilder();
-                    embed.setTitle("Swear Log");
-                    embed.addField("User", gmre.getMessageAuthor().getDiscriminatedName(), false);
-                    embed.addField("Message", message, false);
-                    String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
-                    SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
-                    Date date = new Date();
-                    embed.setFooter(formatter.format(date));
-                    logChannel.sendMessage(embed).join();
+                boolean isLogList = plugin.getConfig().isList("channels.log");
+                String log = plugin.getConfig().getString("channels.log","");
+                List<String> logChannels = new ArrayList<>();
+                if(isLogList) {
+                    logChannels = plugin.getConfig().getStringList("channels.log");
+                } else {
+                    if(!log.isEmpty())
+                        logChannels.add(log);
                 }
+                String finalMessage = message;
+                logChannels.forEach(lc -> {
+                    TextChannel logChannel = plugin.getBot().getTextChannelById(lc).orElse(null);
+                    if (logChannel != null) {
+                        EmbedBuilder embed = new EmbedBuilder();
+                        embed.setTitle("Swear Log");
+                        embed.addField("User", gmre.getMessageAuthor().getDiscriminatedName(), false);
+                        embed.addField("Message", finalMessage, false);
+                        String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
+                        SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
+                        Date date = new Date();
+                        embed.setFooter(formatter.format(date));
+                        logChannel.sendMessage(embed).join();
+                    }
+                });
             }
         }
         String censored = null;

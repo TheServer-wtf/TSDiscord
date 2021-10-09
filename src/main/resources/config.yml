@@ -2,7 +2,6 @@ token: ''
 prefix: '>'
 channels:
   main: ''
-  mature: ''
   log: ''
   status: ''
 roleIgnore: []

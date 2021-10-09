@@ -19,6 +19,8 @@ import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.webhook.Webhook;
+import org.javacord.api.listener.channel.server.ServerChannelDeleteListener;
+import org.javacord.api.util.event.ListenerManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,12 +36,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
 public class BotHandler {
-    private static String DEF_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay&v=%2$d";
+    private static final String DEF_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay&v=%2$d";
     private static DiscordApi bot;
     public static boolean shutdown = false;
     public static int task = -1;
     private static boolean started = false;
-    private static List<CompletableFuture> updates = new ArrayList<>();
+    private static final List<CompletableFuture> updates = new ArrayList<>();
     protected static void startup(DiscordApi bot){
         BotHandler.bot = bot;
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
@@ -55,26 +58,21 @@ public class BotHandler {
         if(bot == null)
             return;
         TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
-        String channel = plugin.getConfig().getString("channelId","");
-        if(channel.isEmpty()){
-            channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+        boolean isList = plugin.getConfig().isList("channels.main");
+        String channel = plugin.getConfig().getString("channels.main","");
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = plugin.getConfig().getStringList("channels.main");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
         }
         String startup = plugin.getConfig().getString("message.startup",":white_check_mark: Server is online.");
         if(startup != null && !startup.isEmpty()) {
-            String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature", "");
-            if (!channel.isEmpty()) {
-                plugin.getBot().getTextChannelById(channel).ifPresent((tc) -> {
-                    tc.sendMessage(startup);
-                });
+            if (!channels.isEmpty()) {
+                channels.forEach((c)-> plugin.getBot().getTextChannelById(c).ifPresent((tc) -> tc.sendMessage(startup)));
             } else {
-                TSDiscordPlugin.getPlugin().sendDebug("Channel is empty in config");
-            }
-            if (!mature.isEmpty()) {
-                plugin.getBot().getTextChannelById(mature).ifPresent((tc) -> {
-                    tc.sendMessage(startup);
-                });
-            } else {
-                TSDiscordPlugin.getPlugin().sendDebug("Mature Channel is empty in config");
+                TSDiscordPlugin.getPlugin().sendDebug("No channel set in config");
             }
         }
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
@@ -89,29 +87,22 @@ public class BotHandler {
         shutdown = true;
         if(bot == null)
             return;
-        String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
-        if(channel.isEmpty()) {
+        TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
+        boolean isList = plugin.getConfig().isList("channels.main");
+        String channel = plugin.getConfig().getString("channels.main","");
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = plugin.getConfig().getStringList("channels.main");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
+        }
+        if(channels.isEmpty()) {
             stopTopicUpdate();
             return;
         }
-        TextChannel tc = bot.getTextChannelById(channel).orElse(null);
-        if(tc == null) {
-            stopTopicUpdate();
-            return;
-        }
-        String shutdown = TSDiscordPlugin.getPlugin().getConfig().getString("message.shutdown", ":octagonal_sign: Server shutdown.");
-        tc.sendMessage(shutdown);
-        String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature","");
-        if(mature.isEmpty()) {
-            stopTopicUpdate();
-            return;
-        }
-        tc = bot.getTextChannelById(mature).orElse(null);
-        if(tc == null) {
-            stopTopicUpdate();
-            return;
-        }
-        tc.sendMessage(shutdown);
+        String shutdown = plugin.getConfig().getString("message.shutdown", ":octagonal_sign: Server shutdown.");
+        channels.forEach((c)-> bot.getTextChannelById(c).ifPresent(tc -> tc.sendMessage(shutdown)));
         stopTopicUpdate();
     }
     protected static void startTopicUpdate(){
@@ -131,7 +122,7 @@ public class BotHandler {
             if(topicUpdate < 1)
                 topicUpdate = 1;
         }
-        long time = 20 * (topicUpdate*60);
+        long time = 20 * (topicUpdate*60L);
         task = TSDiscordPlugin.getPlugin().getServer().getScheduler().runTaskLaterAsynchronously(TSDiscordPlugin.getPlugin(),
                 () -> {
                     if(shutdown)
@@ -156,54 +147,74 @@ public class BotHandler {
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
         if(TSDiscordPlugin.getPlugin().getConfig().getBoolean("message.topic.enabled",true)) {
-            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main", "");
-            if (!channel.isEmpty()) {
-                ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(channel).orElse(null);
-                if (tc != null) {
-                    String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.online", "Online | Players: %current%/%max% | Updated: %time%");
-                    updates.add(tc.updateTopic(msg.replace("%current%", String.valueOf(online)).replace("%max%", String.valueOf(max)).replace("%time%", formatter.format(date))));
-                }
+            boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
+            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+            List<String> channels = new ArrayList<>();
+            if(isList) {
+                channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
+            } else {
+                if(!channel.isEmpty())
+                    channels.add(channel);
+            }
+            if (!channels.isEmpty()) {
+                channels.forEach((c)-> {
+                    ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(c).orElse(null);
+                    if (tc != null) {
+                        String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.online", "Online | Players: %current%/%max% | Updated: %time%");
+                        updates.add(tc.updateTopic(msg.replace("%current%", String.valueOf(online)).replace("%max%", String.valueOf(max)).replace("%time%", formatter.format(date))));
+                    }
+                });
             }
         }
-        String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.status", "");
-        if (!channel.isEmpty()) {
-            TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(channel).orElse(null);
-            if (tc != null) {
-                FileConfiguration important = ImportantConfig.getConfig();
-                String statusId = important.getString("statusId","");
-                EmbedBuilder embed = new EmbedBuilder();
-                String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title","Current Server Status");
-                embed.setTitle(title);
-                String state = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.title","State");
-                String text = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.online",":white_check_mark: Server is online.");
-                embed.addField(state,text,false);
-                String playertext = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.players","Players online");
-                embed.addField(playertext,online+"/"+max,false);
-                embed.setFooter(formatter.format(date));
-                if(!statusId.isEmpty()){
-                    Message message = tc.getMessageById(statusId).join();
-                    if(message == null){
-                        important.set("statusId","");
+        boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.status");
+        String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.status","");
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.status");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
+        }
+        if (!channels.isEmpty()) {
+            channels.forEach(c -> {
+                TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(c).orElse(null);
+                if (tc != null) {
+                    FileConfiguration important = ImportantConfig.getConfig();
+                    String statusId = important.getString("statusId." + c, "");
+                    EmbedBuilder embed = new EmbedBuilder();
+                    String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title", "Current Server Status");
+                    embed.setTitle(title);
+                    String state = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.title", "State");
+                    String text = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.online", ":white_check_mark: Server is online.");
+                    embed.addField(state, text, false);
+                    String playertext = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.players", "Players online");
+                    embed.addField(playertext, online + "/" + max, false);
+                    embed.setFooter(formatter.format(date));
+                    if (!statusId.isEmpty()) {
+                        Message message = tc.getMessageById(statusId).join();
+                        if (message == null) {
+                            important.set("statusId." + c, null);
+                            try {
+                                ImportantConfig.saveConfig();
+                            } catch (IOException e) {
+                                TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
+                            }
+                            ImportantConfig.reloadConfig();
+                            return;
+                        }
+                        message.edit(embed);
+                    } else {
+                        Message msg = tc.sendMessage(embed).join();
+                        important.set("statusId." + c, msg.getIdAsString());
                         try {
                             ImportantConfig.saveConfig();
                         } catch (IOException e) {
-                            TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: "+e.toString());
+                            TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
                         }
                         ImportantConfig.reloadConfig();
-                        return;
                     }
-                    message.edit(embed);
-                } else {
-                    Message msg = tc.sendMessage(embed).join();
-                    important.set("statusId",msg.getIdAsString());
-                    try {
-                        ImportantConfig.saveConfig();
-                    } catch (IOException e) {
-                        TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: "+e.toString());
-                    }
-                    ImportantConfig.reloadConfig();
                 }
-            }
+            });
         }
     }
     protected static void stopTopicUpdate(){
@@ -218,55 +229,72 @@ public class BotHandler {
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
         if(TSDiscordPlugin.getPlugin().getConfig().getBoolean("message.topic.enabled",true)) {
-            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channelId", "");
-            if (channel.isEmpty()) {
-                channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main", "");
+            boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
+            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+            List<String> channels = new ArrayList<>();
+            if(isList) {
+                channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
+            } else {
+                if(!channel.isEmpty())
+                    channels.add(channel);
             }
-            if (!channel.isEmpty()) {
-                ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(channel).orElse(null);
-                if (tc != null) {
-                    String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.offline", "Offline | Updated: %time%");
-                    tc.updateTopic(msg.replace("%time%", formatter.format(date)));
-                }
+            if (!channels.isEmpty()) {
+                channels.forEach((c)-> {
+                    ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(c).orElse(null);
+                    if (tc != null) {
+                        String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.offline", "Offline | Updated: %time%");
+                        tc.updateTopic(msg.replace("%time%", formatter.format(date)));
+                    }
+                });
             }
         }
-        String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.status", "");
-        if (!channel.isEmpty()) {
-            TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(channel).orElse(null);
-            if (tc != null) {
-                EmbedBuilder embed = new EmbedBuilder();
-                String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title","Current Server Status");
-                embed.setTitle(title);
-                String state = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.title","State");
-                String text = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.offline",":x: Server is offline.");
-                embed.addField(state,text,false);
-                embed.setFooter(formatter.format(date));
-                FileConfiguration important = ImportantConfig.getConfig();
-                String statusId = important.getString("statusId","");
-                if(!statusId.isEmpty()){
-                    Message message = tc.getMessageById(statusId).join();
-                    if(message == null){
-                        important.set("statusId","");
+        boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.status");
+        String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.status","");
+        List<String> channels = new ArrayList<>();
+        if(isList) {
+            channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.status");
+        } else {
+            if(!channel.isEmpty())
+                channels.add(channel);
+        }
+        if (!channels.isEmpty()) {
+            channels.forEach(c -> {
+                TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(c).orElse(null);
+                if (tc != null) {
+                    EmbedBuilder embed = new EmbedBuilder();
+                    String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title", "Current Server Status");
+                    embed.setTitle(title);
+                    String state = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.title", "State");
+                    String text = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.offline", ":x: Server is offline.");
+                    embed.addField(state, text, false);
+                    embed.setFooter(formatter.format(date));
+                    FileConfiguration important = ImportantConfig.getConfig();
+                    String statusId = important.getString("statusId." + c, "");
+                    if (!statusId.isEmpty()) {
+                        Message message = tc.getMessageById(statusId).join();
+                        if (message == null) {
+                            important.set("statusId." + c, null);
+                            try {
+                                ImportantConfig.saveConfig();
+                            } catch (IOException e) {
+                                TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
+                            }
+                            ImportantConfig.reloadConfig();
+                            return;
+                        }
+                        message.edit(embed);
+                    } else {
+                        Message msg = tc.sendMessage(embed).join();
+                        important.set("statusId." + c, msg.getIdAsString());
                         try {
                             ImportantConfig.saveConfig();
                         } catch (IOException e) {
-                            TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: "+e.toString());
+                            TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
                         }
                         ImportantConfig.reloadConfig();
-                        return;
                     }
-                    message.edit(embed);
-                } else {
-                    Message msg = tc.sendMessage(embed).join();
-                    important.set("statusId",msg.getIdAsString());
-                    try {
-                        ImportantConfig.saveConfig();
-                    } catch (IOException e) {
-                        TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: "+e.toString());
-                    }
-                    ImportantConfig.reloadConfig();
                 }
-            }
+            });
         }
         bot.unsetActivity();
         bot.disconnect();
@@ -293,6 +321,7 @@ public class BotHandler {
         }
         return id;
     }
+    @Deprecated
     public static String getServerChannel(){
         return TSDiscordPlugin.getPlugin().getConfig().getString("channelId",null);
     }
@@ -315,6 +344,9 @@ public class BotHandler {
         }
         return false;
     }
+
+    private static final HashMap<String, ServerTextChannel> textChannelMap = new HashMap<>();
+    private static final HashMap<String, ListenerManager> listenerMap = new HashMap<>();
     protected static void chat(Player user, String message){
         if(bot == null) {
             TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: BOT is null !!!");
@@ -328,7 +360,7 @@ public class BotHandler {
         if(TSDiscordPlugin.getVaultPerms() != null) {
             try {
                 group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
-            } catch (Exception e){
+            } catch (Exception ignored){
             }
         }
         String userPrefix = "";
@@ -349,50 +381,64 @@ public class BotHandler {
             player += (!userSuffix.isEmpty()) ? userSuffix : "";
         }
         FileConfiguration important = ImportantConfig.getConfig();
-        String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
-        String mature = TSDiscordPlugin.getPlugin().getConfig().getString("channels.mature","");
-        if(mature != null && !mature.isEmpty()){
-            ServerTextChannel tc = bot.getServerTextChannelById(mature).orElse(null);
-            if(tc != null) {
-                String hookId = important.getString("webhooks."+tc.getId(),"");
-                if(!hookId.isEmpty()) {
-                    sendWebhook(hookId,message,player,avatar);
-                } else {
-                    Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
-                    hookId = webhook.getIdAsString();
-                    important.set("webhooks."+tc.getId(),hookId);
-                    modify = true;
-                    sendWebhook(hookId,message,player,avatar);
+        boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
+        List<String> channels = new ArrayList<>();
+        if(!isList) {
+            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+            if(channel != null && !channel.isEmpty())
+                channels.add(channel);
+        } else {
+            channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
+        }
+        if(channels.isEmpty()) {
+            TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: No channel set in config");
+            return;
+        }
+        for(String c : channels) {
+            ServerTextChannel tc;
+            if(textChannelMap.containsKey(c)) {
+                tc = textChannelMap.get(c);
+            } else {
+                tc = bot.getServerTextChannelById(c).orElse(null);
+                if(tc != null) {
+                    List<String> finalChannels = channels;
+                    ListenerManager<ServerChannelDeleteListener> mgr = tc.addServerChannelDeleteListener((event) -> {
+                        if (event.getChannel().getIdAsString().equals(c)) {
+                            textChannelMap.remove(c);
+                            finalChannels.remove(c);
+                            listenerMap.remove(c).remove();
+                            if(isList)
+                                TSDiscordPlugin.getPlugin().getConfig().set("channels.main",finalChannels);
+                            else
+                                TSDiscordPlugin.getPlugin().getConfig().set("channels.main","");
+                        }
+                    });
+                    listenerMap.put(c,mgr);
                 }
             }
+            if (tc == null) {
+                TSDiscordPlugin.getPlugin().sendDebug("Channel not found: "+c);
+                continue;
+            }
+            String censored = null;
+            if (TSDiscordPlugin.getCensorPlugin() != null)
+                censored = Censor.censor(message, true, false);
+            message = (censored == null) ? message : censored;
+            if (TSDiscordPlugin.getCensorPlugin() != null)
+                censored = Censor.censor(player, true, false);
+            player = (censored == null) ? player : censored;
+            String hookId = important.getString("webhooks." + tc.getId(), "");
+            if (!hookId.isEmpty()) {
+                sendWebhook(hookId, message, player, avatar);
+            } else {
+                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
+                hookId = webhook.getIdAsString();
+                important.set("webhooks." + tc.getId(), hookId);
+                modify = true;
+                sendWebhook(hookId, message, player, avatar);
+            }
         }
-        if(channel == null || channel.isEmpty()) {
-            TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: Channel not set in config");
-            return;
-        }
-        ServerTextChannel tc = bot.getServerTextChannelById(channel).orElse(null);
-        if(tc == null) {
-            TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: Channel not found");
-            TSDiscordPlugin.getPlugin().sendDebug(channel);
-            return;
-        }
-        String censored = null;
-        if(TSDiscordPlugin.getCensorPlugin() != null)
-            censored = Censor.censor(message,true,false);
-        message = (censored == null) ? message : censored;
-        if(TSDiscordPlugin.getCensorPlugin() != null)
-            censored = Censor.censor(player,true,false);
-        player = (censored == null) ? player : censored;
-        String hookId = important.getString("webhooks."+tc.getId(),"");
-        if(!hookId.isEmpty()) {
-            sendWebhook(hookId,message,player,avatar);
-        } else {
-            Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
-            hookId = webhook.getIdAsString();
-            important.set("webhooks."+tc.getId(),hookId);
-            modify = true;
-            sendWebhook(hookId,message,player,avatar);
-        }
+        TSDiscordPlugin.getPlugin().saveConfig();
         if(modify){
             try {
                 ImportantConfig.saveConfig();
