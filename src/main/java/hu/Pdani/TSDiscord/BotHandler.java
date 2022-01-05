@@ -212,7 +212,7 @@ public class BotHandler {
         if(task != -1){
             TSDiscordPlugin.getPlugin().getServer().getScheduler().cancelTask(task);
         }
-        String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
+        String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.time", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
         boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.status");
