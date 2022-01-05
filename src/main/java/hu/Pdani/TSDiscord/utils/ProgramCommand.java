@@ -9,4 +9,5 @@ import java.util.List;
 public interface ProgramCommand {
     void run(MessageAuthor author, TextChannel channel, Server server, List<String> args);
     String getLabel();
+    String getDescription();
 }

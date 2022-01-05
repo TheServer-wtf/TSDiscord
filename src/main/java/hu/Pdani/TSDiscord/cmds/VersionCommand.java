@@ -28,7 +28,7 @@ public class VersionCommand implements ProgramCommand {
         builder.setDescription("Discord<->MC link plugin");
         builder.addField("Made by",maker.toString());
         builder.addField("Version",plugin.getDescription().getVersion());
-        String timeFormat = plugin.getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
+        String timeFormat = plugin.getConfig().getString("message.time", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
         builder.setFooter(formatter.format(date));
@@ -38,5 +38,10 @@ public class VersionCommand implements ProgramCommand {
     @Override
     public String getLabel() {
         return "version";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Returns information about the plugin";
     }
 }

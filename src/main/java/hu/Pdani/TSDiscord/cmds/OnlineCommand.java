@@ -30,4 +30,9 @@ public class OnlineCommand implements ProgramCommand {
     public String getLabel() {
         return "online";
     }
+
+    @Override
+    public String getDescription() {
+        return "Get a list of online players";
+    }
 }

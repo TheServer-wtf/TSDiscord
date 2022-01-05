@@ -6,20 +6,13 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.15.1</version>
+    <version>0.16.0</version>
     <properties>
         <mainClass>${project.groupId}.${project.artifactId}.${project.artifactId}Plugin</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.mikemik44</groupId>
-            <artifactId>censorplugin</artifactId>
-            <version>0.4</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/TogglableCensor.jar</systemPath>
-        </dependency>
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -35,7 +28,7 @@
         <dependency>
             <groupId>org.javacord</groupId>
             <artifactId>javacord</artifactId>
-            <version>3.1.1</version>
+            <version>3.3.2</version>
             <type>pom</type>
             <scope>compile</scope>
             <exclusions>

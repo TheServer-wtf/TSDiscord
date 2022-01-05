@@ -23,4 +23,9 @@ public class TPSCommand implements ProgramCommand {
     public String getLabel() {
         return "tps";
     }
+
+    @Override
+    public String getDescription() {
+        return "Get the current server TPS";
+    }
 }

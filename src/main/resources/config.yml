@@ -16,13 +16,7 @@ message:
   startup: ':white_check_mark: Server is starting.'
   join: '%player% joined the server.'
   leave: '%player% left the server.'
-  swear: 'Please, do not swear in a non-mature channel!'
-  topic:
-    enabled: true
-    online: 'Online | Players: %current%/%max% | Last updated: %time%'
-    offline: 'Offline | Last updated: %time%'
-    time: 'dd/MM/yyyy HH:mm:ss'
-    update: 13
+  time: 'dd/MM/yyyy HH:mm:ss'
   status:
     update: 2
     title: 'Current Server Status'

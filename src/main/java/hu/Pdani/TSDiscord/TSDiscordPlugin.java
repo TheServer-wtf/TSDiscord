@@ -1,6 +1,5 @@
 package hu.Pdani.TSDiscord;
 
-import com.mikemik44.censor.Test;
 import hu.Pdani.TSDiscord.utils.CommandListener;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.ServiceListener;
@@ -26,7 +25,6 @@ public class TSDiscordPlugin extends JavaPlugin {
     protected static DiscordListener dl;
     protected static CommandListener cl;
     private static TSDiscordPlugin plugin;
-    private static Test censorPlugin;
     public static double tps = 0.00;
     private static Permission perms = null;
     private static Chat chat = null;
@@ -61,9 +59,6 @@ public class TSDiscordPlugin extends JavaPlugin {
             getLogger().warning("Bot token or prefix is empty!");
         }
         getCommand("tsdiscord").setExecutor(cl);
-        Plugin cp = getServer().getPluginManager().getPlugin("ToggableCensor-Mikemik44");
-        if(cp instanceof Test)
-            censorPlugin = (Test) cp;
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
         if(vault != null){
             setupPermissions();
@@ -159,13 +154,6 @@ public class TSDiscordPlugin extends JavaPlugin {
         return plugin;
     }
 
-    public static Test getCensorPlugin() {
-        return censorPlugin;
-    }
-    public Test getCPlugin() {
-        return getCensorPlugin();
-    }
-
     public DiscordApi getBot(){
         return getDiscordBot();
     }
@@ -210,7 +198,7 @@ public class TSDiscordPlugin extends JavaPlugin {
                     }
                 }, 0, 1);
         getServer().getScheduler().runTaskLater(this,
-                BotHandler::started,40);
+                BotHandler::started,1);
     }
     private void startUpdateCheck(Updater updater){
         int id = getServer().getScheduler().scheduleAsyncRepeatingTask(this,

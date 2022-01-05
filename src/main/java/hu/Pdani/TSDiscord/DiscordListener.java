@@ -1,31 +1,25 @@
 package hu.Pdani.TSDiscord;
 
-import com.mikemik44.censor.Censor;
-import hu.Pdani.TSDiscord.utils.ImportantConfig;
-import hu.Pdani.TSDiscord.utils.SwearUtil;
+import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,18 +75,8 @@ public class DiscordListener implements Listener, MessageCreateListener {
         }
     }
 
-    private AsyncPlayerChatEvent lastEvent;
-
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e){
-        if(e == null || e.getRecipients().size() < TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size() || e.getMessage().contains("⋔"))
-            return;
-        if(lastEvent != null){
-            if(lastEvent.getMessage().equals(e.getMessage()) && lastEvent.getPlayer().getName().equals(e.getPlayer().getName())) {
-                return;
-            }
-        }
-        lastEvent = e;
         TSDiscordPlugin.getPlugin().sendDebug("PlayerChatEvent received!");
         if(!e.isCancelled())
             BotHandler.chat(e.getPlayer(),e.getMessage());
@@ -126,44 +110,6 @@ public class DiscordListener implements Listener, MessageCreateListener {
             return;
         }
         TSDiscordPlugin.getPlugin().sendDebug("Message received!");
-        if(SwearUtil.checkSwearing(message)){
-            String hook = ImportantConfig.getConfig().getString("webhooks."+gmre.getChannel().getIdAsString(),"");
-            if(!hook.isEmpty()) {
-                String censored = Censor.censor(message,true,false);
-                if(censored != null)
-                    BotHandler.sendWebhook(hook, censored, author.getDisplayName(), author.getAvatar().getUrl().toString(), msg);
-            }
-            Server guild = gmre.getServer().orElse(null);
-            User member = author.asUser().orElse(null);
-            if(guild != null && member != null && !hasIgnoredRole(guild,member.getRoles(guild))) {
-                boolean isLogList = plugin.getConfig().isList("channels.log");
-                String log = plugin.getConfig().getString("channels.log","");
-                List<String> logChannels = new ArrayList<>();
-                if(isLogList) {
-                    logChannels = plugin.getConfig().getStringList("channels.log");
-                } else {
-                    if(!log.isEmpty())
-                        logChannels.add(log);
-                }
-                String finalMessage = message;
-                logChannels.forEach(lc -> {
-                    TextChannel logChannel = plugin.getBot().getTextChannelById(lc).orElse(null);
-                    if (logChannel != null) {
-                        EmbedBuilder embed = new EmbedBuilder();
-                        embed.setTitle("Swear Log");
-                        embed.addField("User", gmre.getMessageAuthor().getDiscriminatedName(), false);
-                        embed.addField("Message", finalMessage, false);
-                        String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
-                        SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
-                        Date date = new Date();
-                        embed.setFooter(formatter.format(date));
-                        logChannel.sendMessage(embed).join();
-                    }
-                });
-            }
-        }
-        String censored = null;
-        boolean allowCensor = plugin.getCPlugin() != null;
         String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
         if(chatFormat == null || chatFormat.isEmpty())
             chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
@@ -175,24 +121,12 @@ public class DiscordListener implements Listener, MessageCreateListener {
         }
         message = getMentionNicks(message,gmre.getServer().orElse(null), msg.getMentionedUsers());
         plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
-        for(Player p : plugin.getServer().getOnlinePlayers()){
-            if(allowCensor) {
-                int mode = plugin.getCPlugin().getPlayerMode(p.getUniqueId().toString());
-                switch (mode){
-                    case 0:
-                        censored = Censor.censor(message,false,false);
-                        break;
-                    case 2:
-                        censored = Censor.censor(message,true,true);
-                        break;
-                    case 1:
-                    default:
-                        censored = Censor.censor(message,true,false);
-                        break;
-                }
-            }
-            String format = (censored == null) ? message : censored;
-            p.sendMessage(String.format(c(chatFormat),author.getDisplayName(),format(ChatColor.stripColor(format))));
+        DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),author.getIdAsString(),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
+        plugin.getServer().getPluginManager().callEvent(dcevent);
+        if(dcevent.isCancelled())
+            return;
+        for(Player p : dcevent.getPlayers()){
+            p.sendMessage(String.format(c(chatFormat),dcevent.getUser(),format(ChatColor.stripColor(dcevent.getMessage()))));
         }
     }
 

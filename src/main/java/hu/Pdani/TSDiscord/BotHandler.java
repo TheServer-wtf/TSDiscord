@@ -2,7 +2,6 @@ package hu.Pdani.TSDiscord;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import com.mikemik44.censor.Censor;
 import hu.Pdani.TSDiscord.cmds.OnlineCommand;
 import hu.Pdani.TSDiscord.cmds.TPSCommand;
 import hu.Pdani.TSDiscord.cmds.VersionCommand;
@@ -50,6 +49,7 @@ public class BotHandler {
             BotHandler.bot.updateActivity(ActivityType.WATCHING,online);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.cl);
+        /// TODO: Use the new slash commands you dummy!
         CommandManager.add(new TPSCommand());
         CommandManager.add(new OnlineCommand());
         CommandManager.add(new VersionCommand());
@@ -82,6 +82,7 @@ public class BotHandler {
         else
             bot.updateActivity(ActivityType.WATCHING,"Server");
         startTopicUpdate();
+
     }
     protected static void end(){
         shutdown = true;
@@ -109,27 +110,21 @@ public class BotHandler {
         if(started)
             return;
         started = true;
-        changeTopic();
+        //changeTopic();
         startTask();
     }
     private static void startTask(){
-        int topicUpdate = TSDiscordPlugin.getPlugin().getConfig().getInt("message.topic.update",13);
-        if(TSDiscordPlugin.getPlugin().getConfig().getBoolean("message.topic.enabled",true)) {
-            if (topicUpdate < 13)
-                topicUpdate = 13;
-        } else {
-            topicUpdate = TSDiscordPlugin.getPlugin().getConfig().getInt("message.status.update",2);
-            if(topicUpdate < 1)
-                topicUpdate = 1;
-        }
+        int topicUpdate = TSDiscordPlugin.getPlugin().getConfig().getInt("message.status.update",2);
+        if(topicUpdate < 1)
+            topicUpdate = 1;
         long time = 20 * (topicUpdate*60L);
-        task = TSDiscordPlugin.getPlugin().getServer().getScheduler().runTaskLaterAsynchronously(TSDiscordPlugin.getPlugin(),
+        task = TSDiscordPlugin.getPlugin().getServer().getScheduler().scheduleAsyncRepeatingTask(TSDiscordPlugin.getPlugin(),
                 () -> {
                     if(shutdown)
                         return;
                     startTask();
                     changeTopic();
-                }, time).getTaskId();
+                }, 0, time);
         if(task == -1){
             changeTopic();
         }
@@ -143,29 +138,9 @@ public class BotHandler {
         }
         int online = TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size();
         int max = TSDiscordPlugin.getPlugin().getServer().getMaxPlayers();
-        String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.time","dd/MM/yyyy HH:mm:ss");
+        String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.time","dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
-        if(TSDiscordPlugin.getPlugin().getConfig().getBoolean("message.topic.enabled",true)) {
-            boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
-            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
-            List<String> channels = new ArrayList<>();
-            if(isList) {
-                channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
-            } else {
-                if(!channel.isEmpty())
-                    channels.add(channel);
-            }
-            if (!channels.isEmpty()) {
-                channels.forEach((c)-> {
-                    ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(c).orElse(null);
-                    if (tc != null) {
-                        String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.online", "Online | Players: %current%/%max% | Updated: %time%");
-                        updates.add(tc.updateTopic(msg.replace("%current%", String.valueOf(online)).replace("%max%", String.valueOf(max)).replace("%time%", formatter.format(date))));
-                    }
-                });
-            }
-        }
         boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.status");
         String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.status","");
         List<String> channels = new ArrayList<>();
@@ -237,33 +212,9 @@ public class BotHandler {
         if(task != -1){
             TSDiscordPlugin.getPlugin().getServer().getScheduler().cancelTask(task);
         }
-        for(CompletableFuture cf : updates){
-            cf.cancel(true);
-        }
-        updates.clear();
         String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.time", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
-        if(TSDiscordPlugin.getPlugin().getConfig().getBoolean("message.topic.enabled",true)) {
-            boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
-            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
-            List<String> channels = new ArrayList<>();
-            if(isList) {
-                channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
-            } else {
-                if(!channel.isEmpty())
-                    channels.add(channel);
-            }
-            if (!channels.isEmpty()) {
-                channels.forEach((c)-> {
-                    ServerTextChannel tc = TSDiscordPlugin.getDiscordBot().getServerTextChannelById(c).orElse(null);
-                    if (tc != null) {
-                        String msg = TSDiscordPlugin.getPlugin().getConfig().getString("message.topic.offline", "Offline | Updated: %time%");
-                        tc.updateTopic(msg.replace("%time%", formatter.format(date)));
-                    }
-                });
-            }
-        }
         boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.status");
         String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.status","");
         List<String> channels = new ArrayList<>();
@@ -368,6 +319,7 @@ public class BotHandler {
             TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: BOT is null !!!");
             return;
         }
+        message = ChatColor.stripColor(message);
         boolean modify = false;
         String player = ChatColor.stripColor(user.getDisplayName());
         String group = null;
@@ -436,13 +388,6 @@ public class BotHandler {
                 TSDiscordPlugin.getPlugin().sendDebug("Channel not found: "+c);
                 continue;
             }
-            String censored = null;
-            if (TSDiscordPlugin.getCensorPlugin() != null)
-                censored = Censor.censor(message, true, false);
-            message = (censored == null) ? message : censored;
-            if (TSDiscordPlugin.getCensorPlugin() != null)
-                censored = Censor.censor(player, true, false);
-            player = (censored == null) ? player : censored;
             String hookId = important.getString("webhooks." + tc.getId(), "");
             if (!hookId.isEmpty()) {
                 sendWebhook(hookId, message, player, avatar);
@@ -474,7 +419,7 @@ public class BotHandler {
                 TSDiscordPlugin.getPlugin().sendDebug(String.format("Error while trying to send webhook: %s",error));
                 return;
             }
-            WebhookClient client = WebhookClient.withId(hook.getId(),hook.getToken().orElse(""));
+            WebhookClient client = WebhookClient.withId(hook.getId(),hook.asIncomingWebhook().get().getToken());
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
             builder.setUsername(name);
             if(avatarUrl != null)
