@@ -1,6 +1,10 @@
 package hu.Pdani.TSDiscord;
 
+import hu.Pdani.TSDiscord.cmds.OnlineCommand;
+import hu.Pdani.TSDiscord.cmds.TPSCommand;
+import hu.Pdani.TSDiscord.cmds.VersionCommand;
 import hu.Pdani.TSDiscord.utils.CommandListener;
+import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.ServiceListener;
 import hu.Pdani.TSDiscord.utils.Updater;
@@ -29,7 +33,13 @@ public class TSDiscordPlugin extends JavaPlugin {
     private static Permission perms = null;
     private static Chat chat = null;
     public ArrayList<Player> debug = new ArrayList<>();
-    private int vaultTask = -1;
+
+    @Override
+    public void onLoad() {
+        CommandManager.add(new TPSCommand());
+        CommandManager.add(new OnlineCommand());
+        CommandManager.add(new VersionCommand());
+    }
 
     @Override
     public void onEnable() {
@@ -42,7 +52,7 @@ public class TSDiscordPlugin extends JavaPlugin {
         cl = new CommandListener();
         String token = getConfig().getString("token","");
         String prefix = getConfig().getString("prefix",">");
-        if((token != null && !token.isEmpty()) && (prefix != null && !prefix.isEmpty())) {
+        if(!token.isEmpty() && !prefix.isEmpty()) {
             new DiscordApiBuilder().setToken(token).login().whenComplete((api, error) -> {
                 if(error != null){
                     getLogger().severe(String.format("There was an error trying to login to the bot: %s",error));
@@ -152,6 +162,9 @@ public class TSDiscordPlugin extends JavaPlugin {
 
     public static TSDiscordPlugin getPlugin(){
         return plugin;
+    }
+    public static boolean isStarted() {
+        return plugin != null;
     }
 
     public DiscordApi getBot(){

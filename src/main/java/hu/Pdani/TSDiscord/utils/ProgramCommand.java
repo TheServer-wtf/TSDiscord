@@ -1,13 +1,9 @@
 package hu.Pdani.TSDiscord.utils;
 
-import org.javacord.api.entity.channel.TextChannel;
-import org.javacord.api.entity.message.MessageAuthor;
-import org.javacord.api.entity.server.Server;
-
-import java.util.List;
+import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 
 public interface ProgramCommand {
-    void run(MessageAuthor author, TextChannel channel, Server server, List<String> args);
+    void run(InteractionImmediateResponseBuilder builder);
     String getLabel();
     String getDescription();
 }

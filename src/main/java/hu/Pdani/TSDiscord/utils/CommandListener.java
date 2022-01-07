@@ -1,42 +1,36 @@
 package hu.Pdani.TSDiscord.utils;
 
-import hu.Pdani.TSDiscord.BotHandler;
 import hu.Pdani.TSDiscord.TSDiscordPlugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.MessageAuthor;
-import org.javacord.api.event.message.MessageCreateEvent;
-import org.javacord.api.listener.message.MessageCreateListener;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.SlashCommandInteraction;
+import org.javacord.api.listener.interaction.SlashCommandCreateListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
-public class CommandListener implements CommandExecutor, MessageCreateListener {
+public class CommandListener implements CommandExecutor, SlashCommandCreateListener {
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String alias, String[] args) {
+    public boolean onCommand(CommandSender sender, @NotNull Command cmd, @NotNull String alias, String[] args) {
         if(!sender.hasPermission("tsdiscord.admin"))
             return true;
         if(args.length > 0){
-            switch (args[0].toLowerCase()){
-                case "debug":
-                    if(!(sender instanceof Player))
-                        return true;
-                    if(TSDiscordPlugin.getPlugin().debug.contains((Player) sender)){
-                        TSDiscordPlugin.getPlugin().debug.remove((Player) sender);
-                        sender.sendMessage("Disabled debug.");
-                    } else {
-                        TSDiscordPlugin.getPlugin().debug.add((Player) sender);
-                        sender.sendMessage("Enabled debug.");
-                    }
+            if ("debug".equalsIgnoreCase(args[0])) {
+                if (!(sender instanceof Player))
                     return true;
-                default:
-                    break;
+                if (TSDiscordPlugin.getPlugin().debug.contains((Player) sender)) {
+                    TSDiscordPlugin.getPlugin().debug.remove((Player) sender);
+                    sender.sendMessage("Disabled debug.");
+                } else {
+                    TSDiscordPlugin.getPlugin().debug.add((Player) sender);
+                    sender.sendMessage("Enabled debug.");
+                }
+                return true;
             }
         }
         TSDiscordPlugin.getPlugin().reloadConfig();
@@ -46,13 +40,12 @@ public class CommandListener implements CommandExecutor, MessageCreateListener {
     }
 
     @Override
-    public void onMessageCreate(MessageCreateEvent gmre) {
-        if(BotHandler.shutdown) {
-            return;
-        }
-        if(!gmre.isServerMessage())
+    public void onSlashCommandCreate(SlashCommandCreateEvent cmdEvent) {
+        SlashCommandInteraction interaction = cmdEvent.getSlashCommandInteraction();
+        if(!interaction.getChannel().isPresent())
             return;
         TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
+        TextChannel textChannel = interaction.getChannel().get();
         boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
         List<String> channels = new ArrayList<>();
@@ -62,25 +55,12 @@ public class CommandListener implements CommandExecutor, MessageCreateListener {
             if(!channel.isEmpty())
                 channels.add(channel);
         }
-        if(!channels.contains(gmre.getChannel().getIdAsString()))
-            return;
-        Message msg = gmre.getMessage();
-        MessageAuthor author = gmre.getMessageAuthor();
-        if(author.isWebhook() || author.isBotUser() || author.isYourself())
-            return;
-        String message = msg.getReadableContent();
-        if(!BotHandler.hasCommand(message)) {
+        if(!channels.contains(textChannel.getIdAsString())) {
+            interaction.createImmediateResponder().respond();
             return;
         }
-        String prefix = plugin.getConfig().getString("prefix",">");
-        if(prefix == null)
-            prefix = ">";
-        ArrayList<String> add = new ArrayList<>(Arrays.asList(message.split(" ")));
-        String label = add.remove(0).replaceFirst(Pattern.quote(prefix),"");
-        List<String> args = message.contains(" ") ? add : new ArrayList<>();
-        ProgramCommand programCommand = CommandManager.get(label);
-        if(programCommand != null){
-            programCommand.run(author,gmre.getChannel(),gmre.getServer().orElse(null),args);
-        }
+        ProgramCommand cmd = CommandManager.get(interaction.getCommandName());
+        if(cmd != null)
+            cmd.run(interaction.createImmediateResponder());
     }
 }

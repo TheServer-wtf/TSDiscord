@@ -2,11 +2,9 @@ package hu.Pdani.TSDiscord;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import hu.Pdani.TSDiscord.cmds.OnlineCommand;
-import hu.Pdani.TSDiscord.cmds.TPSCommand;
-import hu.Pdani.TSDiscord.cmds.VersionCommand;
 import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
+import hu.Pdani.TSDiscord.utils.ProgramCommand;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -18,6 +16,7 @@ import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.webhook.Webhook;
+import org.javacord.api.interaction.SlashCommandBuilder;
 import org.javacord.api.listener.channel.server.ServerChannelDeleteListener;
 import org.javacord.api.util.event.ListenerManager;
 
@@ -31,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
@@ -45,14 +45,17 @@ public class BotHandler {
         BotHandler.bot = bot;
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
         String online = config.getString("message.presence.starting","Startup...");
-        if(online != null && !online.isEmpty())
+        if(!online.isEmpty())
             BotHandler.bot.updateActivity(ActivityType.WATCHING,online);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
-        BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.cl);
-        /// TODO: Use the new slash commands you dummy!
-        CommandManager.add(new TPSCommand());
-        CommandManager.add(new OnlineCommand());
-        CommandManager.add(new VersionCommand());
+        BotHandler.bot.addSlashCommandCreateListener(TSDiscordPlugin.cl);
+        List<SlashCommandBuilder> commands = new ArrayList<>();
+        for(String label : CommandManager.getList()){
+            ProgramCommand command = CommandManager.get(label);
+            SlashCommandBuilder builder = new SlashCommandBuilder().setName(label).setDescription(command.getDescription());
+            commands.add(builder);
+        }
+        BotHandler.bot.bulkOverwriteGlobalSlashCommands(commands).join();
     }
     protected static void started(){
         if(bot == null)
@@ -68,7 +71,7 @@ public class BotHandler {
                 channels.add(channel);
         }
         String startup = plugin.getConfig().getString("message.startup",":white_check_mark: Server is online.");
-        if(startup != null && !startup.isEmpty()) {
+        if(!startup.isEmpty()) {
             if (!channels.isEmpty()) {
                 channels.forEach((c)-> plugin.getBot().getTextChannelById(c).ifPresent((tc) -> tc.sendMessage(startup)));
             } else {
@@ -77,7 +80,7 @@ public class BotHandler {
         }
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
         String online = config.getString("message.presence.online","Server");
-        if(online != null && !online.isEmpty())
+        if(!online.isEmpty())
             bot.updateActivity(ActivityType.WATCHING,online);
         else
             bot.updateActivity(ActivityType.WATCHING,"Server");
@@ -266,50 +269,10 @@ public class BotHandler {
         bot.unsetActivity();
         bot.disconnect();
     }
-    public static void deleteMsg(String channel, String id){
-        if(bot == null || shutdown)
-            return;
-        if(channel.isEmpty() || id.isEmpty()) {
-            return;
-        }
-        TextChannel tc = bot.getTextChannelById(channel).orElse(null);
-        if(tc == null) {
-            return;
-        }
-        tc.getMessageById(id).join().delete().join();
-    }
-    public static String sendMessage(String channel, String message){
-        String id = null;
-        if(!channel.isEmpty() && !message.isEmpty()) {
-            TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(channel).orElse(null);
-            if(tc != null) {
-                id = tc.sendMessage(message).join().getIdAsString();
-            }
-        }
-        return id;
-    }
-    @Deprecated
-    public static String getServerChannel(){
-        return TSDiscordPlugin.getPlugin().getConfig().getString("channelId",null);
-    }
-    public static boolean isCommand(String m){
-        String prefix = TSDiscordPlugin.getPlugin().getConfig().getString("prefix",">");
-        if(prefix == null || prefix.isEmpty())
-            return false;
-        return m.startsWith(prefix);
-    }
-    public static boolean hasCommand(String m){
-        if(!isCommand(m) || bot == null)
-            return false;
-        String prefix = TSDiscordPlugin.getPlugin().getConfig().getString("prefix",">");
-        String cmd = m.replaceFirst(prefix,"");
-        if(cmd.contains(" "))
-            cmd = cmd.split(" ")[0];
-        for(String label : CommandManager.getList()){
-            if(label.equalsIgnoreCase(cmd))
-                return true;
-        }
-        return false;
+
+    private static String escapeName(String name){
+        name = name.replaceAll(Pattern.quote("_"),"\\_");
+        return name;
     }
 
     private static final HashMap<String, ServerTextChannel> textChannelMap = new HashMap<>();
@@ -353,7 +316,7 @@ public class BotHandler {
         List<String> channels = new ArrayList<>();
         if(!isList) {
             String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
-            if(channel != null && !channel.isEmpty())
+            if(!channel.isEmpty())
                 channels.add(channel);
         } else {
             channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
@@ -389,15 +352,13 @@ public class BotHandler {
                 continue;
             }
             String hookId = important.getString("webhooks." + tc.getId(), "");
-            if (!hookId.isEmpty()) {
-                sendWebhook(hookId, message, player, avatar);
-            } else {
+            if (hookId.isEmpty()) {
                 Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
                 hookId = webhook.getIdAsString();
                 important.set("webhooks." + tc.getId(), hookId);
                 modify = true;
-                sendWebhook(hookId, message, player, avatar);
             }
+            sendWebhook(hookId, message, player, avatar);
         }
         TSDiscordPlugin.getPlugin().saveConfig();
         if(modify){
@@ -421,7 +382,7 @@ public class BotHandler {
             }
             WebhookClient client = WebhookClient.withId(hook.getId(),hook.asIncomingWebhook().get().getToken());
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
-            builder.setUsername(name);
+            builder.setUsername(escapeName(name));
             if(avatarUrl != null)
                 builder.setAvatarUrl(avatarUrl);
             else

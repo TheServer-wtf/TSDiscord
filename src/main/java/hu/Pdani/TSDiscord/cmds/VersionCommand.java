@@ -2,20 +2,17 @@ package hu.Pdani.TSDiscord.cmds;
 
 import hu.Pdani.TSDiscord.TSDiscordPlugin;
 import hu.Pdani.TSDiscord.utils.ProgramCommand;
-import org.javacord.api.entity.channel.TextChannel;
-import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.entity.server.Server;
+import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 public class VersionCommand implements ProgramCommand {
     @Override
-    public void run(MessageAuthor author, TextChannel channel, Server server, List<String> args) {
+    public void run(InteractionImmediateResponseBuilder builder) {
         TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
-        EmbedBuilder builder = new EmbedBuilder();
+        EmbedBuilder embed = new EmbedBuilder();
         StringBuilder maker = new StringBuilder();
         for(String a : plugin.getDescription().getAuthors()){
             if(maker.length() == 0){
@@ -24,15 +21,15 @@ public class VersionCommand implements ProgramCommand {
                 maker.append(",").append(a);
             }
         }
-        builder.setTitle("TSDiscord");
-        builder.setDescription("Discord<->MC link plugin");
-        builder.addField("Made by",maker.toString());
-        builder.addField("Version",plugin.getDescription().getVersion());
+        embed.setTitle("TSDiscord");
+        embed.setDescription("Discord<->MC link plugin");
+        embed.addField("Made by",maker.toString());
+        embed.addField("Version",plugin.getDescription().getVersion());
         String timeFormat = plugin.getConfig().getString("message.time", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat formatter = new SimpleDateFormat(timeFormat);
         Date date = new Date();
-        builder.setFooter(formatter.format(date));
-        channel.sendMessage(builder).join();
+        embed.setFooter(formatter.format(date));
+        builder.addEmbed(embed).respond();
     }
 
     @Override

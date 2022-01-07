@@ -4,7 +4,8 @@ import hu.Pdani.TSDiscord.TSDiscordPlugin;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 public class ImportantConfig {
     private static File configFile;

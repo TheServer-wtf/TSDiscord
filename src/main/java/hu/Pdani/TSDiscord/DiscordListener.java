@@ -11,7 +11,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
-import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
@@ -33,7 +32,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
     }
 
     public String escapeName(String name){
-        name = name.replaceAll("_","\\_");
+        name = name.replaceAll(Pattern.quote("_"),"\\_");
         return name;
     }
 
@@ -105,13 +104,9 @@ public class DiscordListener implements Listener, MessageCreateListener {
         String message = msg.getReadableContent();
         if(author.isWebhook() || author.isBotUser() || author.isYourself() || message.isEmpty())
             return;
-        if(BotHandler.hasCommand(message)) {
-            TSDiscordPlugin.getPlugin().sendDebug("The message contains a valid command, skipping.");
-            return;
-        }
         TSDiscordPlugin.getPlugin().sendDebug("Message received!");
         String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
-        if(chatFormat == null || chatFormat.isEmpty())
+        if(chatFormat.isEmpty())
             chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
         chatFormat = chatFormat.replace("{user}","%1$s");
         chatFormat = chatFormat.replace("{msg}","%2$s");
@@ -173,22 +168,5 @@ public class DiscordListener implements Listener, MessageCreateListener {
         matcher.appendTail(result);
         text = result.toString();
         return text;
-    }
-
-    private boolean hasIgnoredRole(Server guild, List<Role> roles){
-        List<String> ignoredString = plugin.getConfig().getStringList("roleIgnore");
-        if(ignoredString.isEmpty())
-            return false;
-        List<Role> ignored = new ArrayList<>();
-        for(Role r : guild.getRoles()){
-            if(ignoredString.contains(r.getIdAsString())){
-                ignored.add(r);
-            }
-        }
-        for(Role r : roles){
-            if(ignored.contains(r))
-                return true;
-        }
-        return false;
     }
 }

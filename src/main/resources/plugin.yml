@@ -3,9 +3,9 @@ version: ${project.version}
 name: ${project.artifactId}
 authors: [Pdani001]
 website: 'theserver.wtf'
-api-version: '1.16'
+api-version: '1.18'
 description: 'A Discord link plugin written for TheServer.wtf'
-softdepend: [Vault,OptionalCensor-mikemik44]
+softdepend: [Vault]
 commands:
   tsdiscord:
     description: 'Main plugin command for TSDiscord'
