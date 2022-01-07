@@ -122,7 +122,7 @@ public class BotHandler {
                 () -> {
                     if(shutdown)
                         return;
-                    startTask();
+                    //startTask();
                     changeTopic();
                 }, 0, time);
         if(task == -1){
