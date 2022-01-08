@@ -70,7 +70,7 @@ public class BotHandler {
             if(!channel.isEmpty())
                 channels.add(channel);
         }
-        String startup = plugin.getConfig().getString("message.startup",":white_check_mark: Server is online.");
+        String startup = plugin.getConfig().getString("message.startup",":white_check_mark: Server started.");
         if(!startup.isEmpty()) {
             if (!channels.isEmpty()) {
                 channels.forEach((c)-> plugin.getBot().getTextChannelById(c).ifPresent((tc) -> tc.sendMessage(startup)));
