@@ -1,21 +1,27 @@
 package hu.Pdani.TSDiscord;
 
 import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
+import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
+import org.javacord.api.entity.webhook.Webhook;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -124,6 +130,31 @@ public class DiscordListener implements Listener, MessageCreateListener {
             return;
         for(Player p : dcevent.getPlayers()){
             p.sendMessage(String.format(c(chatFormat),dcevent.getUser(),format(ChatColor.stripColor(dcevent.getMessage()))));
+        }
+        FileConfiguration important = ImportantConfig.getConfig();
+        boolean modify = false;
+        for(String c : channels){
+            if(c.equals(gmre.getChannel().getIdAsString()))
+                continue;
+            String hookId = important.getString("webhooks." + c, "");
+            if (hookId.isEmpty()) {
+                ServerTextChannel tc = gmre.getApi().getServerTextChannelById(c).orElse(null);
+                if(tc == null)
+                    continue;
+                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
+                hookId = webhook.getIdAsString();
+                important.set("webhooks." + tc.getId(), hookId);
+                modify = true;
+            }
+            BotHandler.sendWebhook(hookId, message, dcevent.getUser(), author.getAvatar().getUrl().toString(), msg);
+        }
+        if(modify){
+            try {
+                ImportantConfig.saveConfig();
+            } catch (IOException ex) {
+                plugin.getLogger().warning("Unable to save 'donotmodify.yml' to disk: "+ex.toString());
+            }
+            ImportantConfig.reloadConfig();
         }
     }
 

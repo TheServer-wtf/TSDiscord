@@ -1,7 +1,7 @@
 main: ${mainClass}
 version: ${project.version}
 name: ${project.artifactId}
-authors: [Pdani001]
+authors: [Pdani]
 website: 'theserver.wtf'
 api-version: '1.18'
 description: 'A Discord link plugin written for TheServer.wtf'

@@ -404,13 +404,10 @@ public class BotHandler {
                                 return;
                             client.send(builder.build());
                             client.close();
-                            original.delete();
                         }
                     });
                 }
             } else {
-                if(original != null)
-                    original.delete();
                 client.send(builder.build());
                 client.close();
             }
