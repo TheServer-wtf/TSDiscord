@@ -51,8 +51,7 @@ public class TSDiscordPlugin extends JavaPlugin {
         ImportantConfig.loadConfig();
         cl = new CommandListener();
         String token = getConfig().getString("token","");
-        String prefix = getConfig().getString("prefix",">");
-        if(!token.isEmpty() && !prefix.isEmpty()) {
+        if(!token.isEmpty()) {
             new DiscordApiBuilder().setToken(token).login().whenComplete((api, error) -> {
                 if(error != null){
                     getLogger().severe(String.format("There was an error trying to login to the bot: %s",error));
@@ -66,7 +65,7 @@ public class TSDiscordPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(dl,this);
             getServer().getPluginManager().registerEvents(new ServiceListener(),this);
         } else {
-            getLogger().warning("Bot token or prefix is empty!");
+            getLogger().warning("Bot token is empty!");
         }
         getCommand("tsdiscord").setExecutor(cl);
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
