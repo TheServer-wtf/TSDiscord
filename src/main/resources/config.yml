@@ -6,7 +6,9 @@ channels:
 roleIgnore: []
 hexColor: false
 consoleDebug: false
-chatFormat: '&8[&eDISCORD&8] &a{user}: &f{msg}'
+chatFormat:
+  normal: '&8[&eDISCORD&8] &a{user}: &f{msg}'
+  reply: '&8[&eDISCORD&8] &a{user} replied to {target}: &f{msg}'
 message:
   presence:
     online: 'Server'

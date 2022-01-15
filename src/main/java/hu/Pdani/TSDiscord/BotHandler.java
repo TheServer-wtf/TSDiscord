@@ -357,7 +357,7 @@ public class BotHandler {
             }
             String hookId = important.getString("webhooks." + tc.getId(), "");
             if (hookId.isEmpty()) {
-                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
+                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").setAvatar(bot.getYourself().getAvatar()).create().join();
                 hookId = webhook.getIdAsString();
                 important.set("webhooks." + tc.getId(), hookId);
                 modify = true;
@@ -406,7 +406,7 @@ public class BotHandler {
                         if(builder.getFileAmount()+ failed.get() == attachments.size()){
                             if(client.isShutdown())
                                 return;
-                            client.send(builder.build());
+                            client.send(builder.build()).join().getId();
                             client.close();
                         }
                     });

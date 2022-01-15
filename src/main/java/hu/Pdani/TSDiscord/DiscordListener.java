@@ -113,23 +113,36 @@ public class DiscordListener implements Listener, MessageCreateListener {
         if(author.isWebhook() || author.isBotUser() || author.isYourself() || message.isEmpty())
             return;
         TSDiscordPlugin.getPlugin().sendDebug("Message received!");
-        String chatFormat = plugin.getConfig().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
+        boolean isReply = msg.getReferencedMessage().isPresent();
+        String chatFormat = plugin.getConfig().getString("chatFormat.normal","&8[&eDISCORD&8] &a{user}: &f{msg}");
+        String replyFormat = plugin.getConfig().getString("chatFormat.reply","&8[&eDISCORD&8] &a{user} replied to {target}: &f{msg}");
         if(chatFormat.isEmpty())
-            chatFormat = plugin.getConfig().getDefaults().getString("chatFormat","&8[&eDISCORD&8] &a{user}: &f{msg}");
+            return;
         chatFormat = chatFormat.replace("{user}","%1$s");
         chatFormat = chatFormat.replace("{msg}","%2$s");
         chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
+        replyFormat = replyFormat.replace("{user}","%1$s");
+        replyFormat = replyFormat.replace("{target}", "%2$s");
+        replyFormat = replyFormat.replace("{msg}","%2$s");
+        replyFormat = StringEscapeUtils.unescapeJava(replyFormat);
         if(plugin.getConfig().getBoolean("hexColor",false)){
             chatFormat = getHexColors(chatFormat);
+            replyFormat = getHexColors(replyFormat);
         }
         message = getMentionNicks(message,gmre.getServer().orElse(null), msg.getMentionedUsers());
-        plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
+        if(!isReply)
+            plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
+        else
+            plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat),author.getDisplayName(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),message));
         DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),author.getIdAsString(),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
         plugin.getServer().getPluginManager().callEvent(dcevent);
         if(dcevent.isCancelled())
             return;
         for(Player p : dcevent.getPlayers()){
-            p.sendMessage(String.format(c(chatFormat),dcevent.getUser(),format(ChatColor.stripColor(dcevent.getMessage()))));
+            if(!isReply)
+                p.sendMessage(String.format(c(chatFormat),dcevent.getUser(),format(ChatColor.stripColor(dcevent.getMessage()))));
+            else
+                p.sendMessage(String.format(c(replyFormat),dcevent.getUser(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),format(ChatColor.stripColor(dcevent.getMessage()))));
         }
         FileConfiguration important = ImportantConfig.getConfig();
         boolean modify = false;
@@ -141,7 +154,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 ServerTextChannel tc = gmre.getApi().getServerTextChannelById(c).orElse(null);
                 if(tc == null)
                     continue;
-                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").create().join();
+                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").setAvatar(gmre.getApi().getYourself().getAvatar()).create().join();
                 hookId = webhook.getIdAsString();
                 important.set("webhooks." + tc.getId(), hookId);
                 modify = true;
