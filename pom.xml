@@ -135,87 +135,9 @@
                                         <exclude>META-INF/NOTICE*</exclude>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
                                         <exclude>META-INF/versions/**</exclude>
-                                        <exclude>version.properties</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
-                            <relocations>
-                                <relocation>
-                                    <pattern>club.minnced</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.club.minnced</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.com.google</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.codahale</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.com.codahale</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.fasterxml</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.com.fasterxml</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.neovisionaries</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.com.neovisionaries</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>io.vavr</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.io.vavr</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>net.md_5</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.net.md_5</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>okhttp3</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.okhttp3</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>okio</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.okio</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.commons.lang3</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.apache.commons.lang3</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.bouncycastle</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.bouncycastle</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.intellij</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.intellij</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.javacord</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.javacord</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.jetbrains</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.jetbrains</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.json</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.json</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.slf4j</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.slf4j</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.checkerframework</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.org.checkerframework</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>javax.annotation</pattern>
-                                    <shadedPattern>hu.Pdani.TSDiscord.libs.javax.annotation</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                            </transformers>
                         </configuration>
                     </execution>
                 </executions>
