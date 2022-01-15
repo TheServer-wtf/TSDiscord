@@ -123,7 +123,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
         chatFormat = StringEscapeUtils.unescapeJava(chatFormat);
         replyFormat = replyFormat.replace("{user}","%1$s");
         replyFormat = replyFormat.replace("{target}", "%2$s");
-        replyFormat = replyFormat.replace("{msg}","%2$s");
+        replyFormat = replyFormat.replace("{msg}","%3$s");
         replyFormat = StringEscapeUtils.unescapeJava(replyFormat);
         if(plugin.getConfig().getBoolean("hexColor",false)){
             chatFormat = getHexColors(chatFormat);
