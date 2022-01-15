@@ -3,7 +3,7 @@ version: ${project.version}
 name: ${project.artifactId}
 authors: [Pdani]
 website: 'theserver.wtf'
-api-version: '1.18'
+api-version: '1.17'
 description: 'A Discord link plugin written for TheServer.wtf'
 softdepend: [Vault]
 commands:
