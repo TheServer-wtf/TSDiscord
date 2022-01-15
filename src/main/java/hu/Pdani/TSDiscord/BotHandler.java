@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -174,7 +175,10 @@ public class BotHandler {
                     embed.addField(playertext, online + "/" + max, false);
                     embed.setFooter(formatter.format(date));
                     if (!statusId.isEmpty()) {
-                        Message message = tc.getMessageById(statusId).join();
+                        Message message = null;
+                        try{
+                            message = tc.getMessageById(statusId).join();
+                        } catch (CompletionException ignored){}
                         if (message == null) {
                             if(!oldId) {
                                 important.set("statusId." + c, null);
