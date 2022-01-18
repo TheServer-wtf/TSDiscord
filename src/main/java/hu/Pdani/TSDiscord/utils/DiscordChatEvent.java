@@ -11,34 +11,56 @@ import java.util.Set;
 public class DiscordChatEvent extends Event implements Cancellable {
     private boolean isCancelled;
     private static final HandlerList HANDLERS = new HandlerList();
-    private String user;
-    private String userId;
+    private final String user;
+    private final DiscordChatEventOrigin origin;
     private String message;
-    private Set<Player> players;
+    private final Set<Player> players;
 
-    public DiscordChatEvent(String user, String userId, String message, Set<Player> players){
+    public DiscordChatEvent(@NotNull String user, DiscordChatEventOrigin origin, @NotNull String message, Set<Player> players){
         super(true);
         this.user = user;
-        this.userId = userId;
+        this.origin = origin;
         this.message = message;
         this.players = players;
     }
 
+    /**
+     * Get the name of the user who sent the message
+     * @return Displayed name of user
+     */
     public String getUser() {
         return user;
     }
 
-    public String getUserId() {
-        return userId;
+    /**
+     * Get the origin of the message
+     * @return origin of the message
+     */
+    public DiscordChatEventOrigin getOrigin() {
+        return origin;
     }
 
+    /**
+     * Get the message the user sent
+     * @return the message
+     */
     public String getMessage() {
         return message;
     }
-    public void setMessage(String message) {
+
+    /**
+     * Alter the message the user sent. <br>
+     * This may be an empty string, but it cannot be null.
+     * @param message the new message
+     */
+    public void setMessage(@NotNull String message) {
         this.message = message;
     }
 
+    /**
+     * Returns a set of players who'll receive the message
+     * @return a set of players or null if {@link #getOrigin()} is Minecraft
+     */
     public Set<Player> getPlayers() {
         return players;
     }
@@ -49,6 +71,10 @@ public class DiscordChatEvent extends Event implements Cancellable {
         return HANDLERS;
     }
 
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
     @Override
     public boolean isCancelled() {
         return isCancelled;
@@ -56,5 +82,10 @@ public class DiscordChatEvent extends Event implements Cancellable {
     @Override
     public void setCancelled(boolean b) {
         isCancelled = b;
+    }
+
+    public enum DiscordChatEventOrigin {
+        DISCORD,
+        MINECRAFT
     }
 }

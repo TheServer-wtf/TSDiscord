@@ -3,6 +3,7 @@ package hu.Pdani.TSDiscord;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import hu.Pdani.TSDiscord.utils.CommandManager;
+import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.ProgramCommand;
 import org.bukkit.ChatColor;
@@ -281,6 +282,12 @@ public class BotHandler {
 
     private static final HashMap<String, ServerTextChannel> textChannelMap = new HashMap<>();
     private static final HashMap<String, ListenerManager> listenerMap = new HashMap<>();
+
+    /**
+     * This method must only be called if a player sends a message in the minecraft chat
+     * @param user the Player
+     * @param message the sent message
+     */
     protected static void chat(Player user, String message){
         if(bot == null) {
             TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: BOT is null !!!");
@@ -290,7 +297,6 @@ public class BotHandler {
         boolean modify = false;
         String player = ChatColor.stripColor(user.getDisplayName());
         String group = null;
-        //String avatar = "https://minotar.net/helm/"+user.getName()+"/300.png?v="+(System.currentTimeMillis()/1000);
         String avatar = String.format(DEF_AVATAR,user.getUniqueId().toString(),(System.currentTimeMillis()/1000));
         if(TSDiscordPlugin.getVaultPerms() != null) {
             try {
@@ -306,7 +312,6 @@ public class BotHandler {
             userSuffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getPlayerSuffix(null, user)));
         }
         if(group != null && TSDiscordPlugin.getVaultChat() != null) {
-            //player += " [" + group + "]";
             String prefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupPrefix(user.getWorld(),group)));
             String suffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupSuffix(user.getWorld(),group)));
             player = (!userPrefix.isEmpty()) ? userPrefix + player : prefix + player;
@@ -362,7 +367,10 @@ public class BotHandler {
                 important.set("webhooks." + tc.getId(), hookId);
                 modify = true;
             }
-            sendWebhook(hookId, message, player, avatar);
+            DiscordChatEvent event = new DiscordChatEvent(player, DiscordChatEvent.DiscordChatEventOrigin.MINECRAFT, message, null);
+            TSDiscordPlugin.getPlugin().getServer().getPluginManager().callEvent(event);
+            if(!event.isCancelled() && !event.getMessage().isEmpty())
+                sendWebhook(hookId, event.getMessage(), event.getUser(), avatar);
         }
         TSDiscordPlugin.getPlugin().saveConfig();
         if(modify){

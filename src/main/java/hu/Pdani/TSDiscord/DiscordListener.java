@@ -116,7 +116,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
         boolean isReply = msg.getReferencedMessage().isPresent();
         String chatFormat = plugin.getConfig().getString("chatFormat.normal","&8[&eDISCORD&8] &a{user}: &f{msg}");
         String replyFormat = plugin.getConfig().getString("chatFormat.reply","&8[&eDISCORD&8] &a{user} replied to {target}: &f{msg}");
-        if(chatFormat.isEmpty())
+        if(chatFormat.isEmpty() || replyFormat.isEmpty())
             return;
         chatFormat = chatFormat.replace("{user}","%1$s");
         chatFormat = chatFormat.replace("{msg}","%2$s");
@@ -134,9 +134,9 @@ public class DiscordListener implements Listener, MessageCreateListener {
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
         else
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat),author.getDisplayName(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),message));
-        DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),author.getIdAsString(),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
+        DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),DiscordChatEvent.DiscordChatEventOrigin.DISCORD,message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
         plugin.getServer().getPluginManager().callEvent(dcevent);
-        if(dcevent.isCancelled())
+        if(dcevent.isCancelled() || dcevent.getMessage().isEmpty())
             return;
         for(Player p : dcevent.getPlayers()){
             if(!isReply)
