@@ -2,3 +2,7 @@
 /.idea/
 /TSDiscordMVN.iml
 /lib/
+/Plugin/Plugin.iml
+/Plugin/target/
+/API/API.iml
+/API/target/

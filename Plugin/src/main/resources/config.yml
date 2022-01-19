@@ -1,0 +1,28 @@
+token: ''
+channels:
+  main: ''
+  log: ''
+  status: ''
+roleIgnore: []
+hexColor: false
+consoleDebug: false
+chatFormat:
+  normal: '&8[&eDISCORD&8] &a{user}: &f{msg}'
+  reply: '&8[&eDISCORD&8] &a{user} replied to {target}: &f{msg}'
+message:
+  presence:
+    online: 'Server'
+    starting: 'Startup...'
+  shutdown: ':octagonal_sign: Server shutdown.'
+  startup: ':white_check_mark: Server started.'
+  join: '%player% joined the server.'
+  leave: '%player% left the server.'
+  time: 'dd/MM/yyyy HH:mm:ss'
+  status:
+    update: 2
+    title: 'Current Server Status'
+    state:
+      title: 'State'
+      online: ':white_check_mark: Server is online.'
+      offline: ':x: Server is offline.'
+    players: 'Players online'
