@@ -134,7 +134,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
         else
             plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat),author.getDisplayName(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),message));
-        DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),DiscordChatEvent.DiscordChatEventOrigin.DISCORD,message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
+        DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
         plugin.getServer().getPluginManager().callEvent(dcevent);
         if(dcevent.isCancelled() || dcevent.getMessage().isEmpty())
             return;

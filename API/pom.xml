@@ -5,24 +5,15 @@
     <parent>
         <artifactId>TSDiscord</artifactId>
         <groupId>hu.Pdani</groupId>
-        <version>0.19.3</version>
+        <version>0.19.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>TSDiscord-API</artifactId>
-    <version>1.0.0</version>
-    <dependencies>
-        <dependency>
-            <groupId>org.javacord</groupId>
-            <artifactId>javacord-api</artifactId>
-            <version>3.3.2</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
     </properties>
 
     <build>

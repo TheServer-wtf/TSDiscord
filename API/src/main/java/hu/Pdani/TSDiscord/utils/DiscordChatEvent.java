@@ -15,13 +15,24 @@ public class DiscordChatEvent extends Event implements Cancellable {
     private final DiscordChatEventOrigin origin;
     private String message;
     private final Set<Player> players;
+    private final Player sender;
 
-    public DiscordChatEvent(@NotNull String user, DiscordChatEventOrigin origin, @NotNull String message, Set<Player> players){
+    public DiscordChatEvent(@NotNull String user, @NotNull String message, Set<Player> players){
         super(true);
         this.user = user;
-        this.origin = origin;
+        this.origin = DiscordChatEventOrigin.DISCORD;
         this.message = message;
         this.players = players;
+        this.sender = null;
+    }
+
+    public DiscordChatEvent(@NotNull String user, @NotNull String message, Player sender){
+        super(true);
+        this.user = user;
+        this.origin = DiscordChatEventOrigin.MINECRAFT;
+        this.message = message;
+        this.players = null;
+        this.sender = sender;
     }
 
     /**
@@ -71,6 +82,14 @@ public class DiscordChatEvent extends Event implements Cancellable {
      */
     public Set<Player> getPlayers() {
         return players;
+    }
+
+    /**
+     * Get the sender of the message
+     * @return sender of the message or null if {@link #getOrigin()} is Discord
+     */
+    public Player getSender() {
+        return sender;
     }
 
     @NotNull

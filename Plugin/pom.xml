@@ -5,7 +5,7 @@
     <parent>
         <artifactId>TSDiscord</artifactId>
         <groupId>hu.Pdani</groupId>
-        <version>0.19.3</version>
+        <version>0.19.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>hu.Pdani</groupId>
             <artifactId>TSDiscord-API</artifactId>
-            <version>1.0.0</version>
+            <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

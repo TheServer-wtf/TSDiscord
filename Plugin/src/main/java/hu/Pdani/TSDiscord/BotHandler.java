@@ -367,7 +367,7 @@ public class BotHandler {
                 important.set("webhooks." + tc.getId(), hookId);
                 modify = true;
             }
-            DiscordChatEvent event = new DiscordChatEvent(player, DiscordChatEvent.DiscordChatEventOrigin.MINECRAFT, message, null);
+            DiscordChatEvent event = new DiscordChatEvent(player, message, user);
             TSDiscordPlugin.getPlugin().getServer().getPluginManager().callEvent(event);
             if(!event.isCancelled() && !event.getMessage().isEmpty())
                 sendWebhook(hookId, event.getMessage(), event.getUser(), avatar);
