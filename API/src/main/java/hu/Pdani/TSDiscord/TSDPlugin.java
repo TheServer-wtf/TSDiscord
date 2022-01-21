@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class TSDPlugin extends JavaPlugin {
     private static TSDPlugin plugin = null;
-    public void onEnable(TSDPlugin self){
+    void onEnable(TSDPlugin self){
         assert self != null;
         plugin = self;
     }

@@ -18,6 +18,7 @@ import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.webhook.Webhook;
 import org.javacord.api.interaction.SlashCommandBuilder;
+import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.listener.channel.server.ServerChannelDeleteListener;
 import org.javacord.api.util.event.ListenerManager;
 
@@ -55,6 +56,10 @@ public class BotHandler {
         for(String label : CommandManager.getList()){
             ProgramCommand command = CommandManager.get(label);
             SlashCommandBuilder builder = new SlashCommandBuilder().setName(label).setDescription(command.getDescription());
+            if(command.getOptions() != null && command.getOptions().size() > 0){
+                for(SlashCommandOption option : command.getOptions())
+                    builder.addOption(option);
+            }
             commands.add(builder);
         }
         BotHandler.bot.bulkOverwriteGlobalSlashCommands(commands).join();

@@ -3,14 +3,17 @@ package hu.Pdani.TSDiscord.cmds;
 import hu.Pdani.TSDiscord.TSDiscordPlugin;
 import hu.Pdani.TSDiscord.utils.ProgramCommand;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.interaction.SlashCommandInteractionOption;
+import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class VersionCommand implements ProgramCommand {
     @Override
-    public void run(InteractionImmediateResponseBuilder builder) {
+    public void run(InteractionImmediateResponseBuilder builder, List<SlashCommandInteractionOption> options) {
         TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
         EmbedBuilder embed = new EmbedBuilder();
         StringBuilder maker = new StringBuilder();
@@ -40,5 +43,10 @@ public class VersionCommand implements ProgramCommand {
     @Override
     public String getDescription() {
         return "Returns information about the plugin";
+    }
+
+    @Override
+    public List<SlashCommandOption> getOptions() {
+        return null;
     }
 }

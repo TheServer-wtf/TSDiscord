@@ -64,6 +64,6 @@ public class CommandListener implements CommandExecutor, SlashCommandCreateListe
         }
         ProgramCommand cmd = CommandManager.get(interaction.getCommandName());
         if(cmd != null)
-            cmd.run(interaction.createImmediateResponder());
+            cmd.run(interaction.createImmediateResponder(), interaction.getOptions());
     }
 }

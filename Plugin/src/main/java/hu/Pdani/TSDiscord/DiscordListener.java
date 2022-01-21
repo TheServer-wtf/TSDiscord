@@ -57,7 +57,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 channels.add(channel);
         }
         if(!channels.isEmpty()) {
-            String msg = "`" + join.replace("%player%", escapeName(event.getPlayer().getName())) + "`";
+            String msg = "**`" + join.replace("%player%", escapeName(event.getPlayer().getName())) + "`**";
             channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
         }
     }
@@ -77,7 +77,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 channels.add(channel);
         }
         if(!channels.isEmpty()) {
-            String msg = "`" + quit.replace("%player%", escapeName(event.getPlayer().getName())) + "`";
+            String msg = "**`" + quit.replace("%player%", escapeName(event.getPlayer().getName())) + "`**";
             channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
         }
     }
