@@ -13,13 +13,19 @@ import net.milkbowl.vault.permission.Permission;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
+import org.javacord.api.entity.channel.ServerTextChannel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -73,6 +79,7 @@ public class TSDiscordPlugin extends TSDPlugin {
             setupPermissions();
             setupChat();
         }
+        messageLimit.clear();
         getLogger().info("The plugin is now enabled.");
     }
 
@@ -175,6 +182,39 @@ public class TSDiscordPlugin extends TSDPlugin {
     public void onDisable() {
         BotHandler.end();
         getLogger().info("The plugin is now disabled.");
+    }
+
+    private final HashMap<JavaPlugin,Long> messageLimit = new HashMap<>();
+
+    @Override
+    public void sendMessage(@NotNull JavaPlugin sender, @NotNull String message) throws IllegalAccessException {
+        if(BotHandler.isEnabled()){
+            long time = System.currentTimeMillis();
+            if(messageLimit.containsKey(sender)){
+                if(messageLimit.get(sender) > time - 250) {
+                    throw new IllegalAccessException("Rate limit exceeded.");
+                }
+            }
+            messageLimit.put(sender,time);
+            boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
+            List<String> channels = new ArrayList<>();
+            if(!isList) {
+                String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+                if(!channel.isEmpty())
+                    channels.add(channel);
+            } else {
+                channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
+            }
+            if(channels.isEmpty()) {
+                return;
+            }
+            for(String c : channels) {
+                ServerTextChannel tc = bot.getServerTextChannelById(c).orElse(null);
+                if(tc == null)
+                    continue;
+                tc.sendMessage(message);
+            }
+        }
     }
 
     public static String c(String m){

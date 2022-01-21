@@ -1,6 +1,6 @@
-main: ${mainClass}
+main: hu.Pdani.TSDiscord.TSDiscordPlugin
 version: ${project.version}
-name: ${project.artifactId}
+name: TSDiscord
 authors: [Pdani]
 website: 'theserver.wtf'
 api-version: '1.17'

@@ -1,6 +1,7 @@
 package hu.Pdani.TSDiscord;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class TSDPlugin extends JavaPlugin {
     private static TSDPlugin plugin = null;
@@ -11,4 +12,12 @@ public abstract class TSDPlugin extends JavaPlugin {
     public static boolean isStarted(){
         return plugin != null;
     }
+
+    /**
+     * Send a message to all channels on Discord
+     * @param sender the plugin
+     * @param message the message
+     * @throws IllegalAccessException if the rate limit is exceeded
+     */
+    public abstract void sendMessage(@NotNull JavaPlugin sender, @NotNull String message) throws IllegalAccessException;
 }

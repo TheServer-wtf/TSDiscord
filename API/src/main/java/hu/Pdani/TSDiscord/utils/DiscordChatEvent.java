@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class DiscordChatEvent extends Event implements Cancellable {
     private boolean isCancelled;
-    private static final HandlerList HANDLERS = new HandlerList();
+    private static final HandlerList handlers = new HandlerList();
     private String user;
     private final DiscordChatEventOrigin origin;
     private String message;
@@ -95,11 +95,11 @@ public class DiscordChatEvent extends Event implements Cancellable {
     @NotNull
     @Override
     public HandlerList getHandlers() {
-        return HANDLERS;
+        return handlers;
     }
 
     public static HandlerList getHandlerList() {
-        return HANDLERS;
+        return handlers;
     }
 
     @Override

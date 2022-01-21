@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.19.4</version>
+    <version>0.19.5</version>
     <modules>
         <module>API</module>
         <module>Plugin</module>
