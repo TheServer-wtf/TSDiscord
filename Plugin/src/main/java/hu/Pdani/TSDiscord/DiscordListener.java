@@ -130,14 +130,14 @@ public class DiscordListener implements Listener, MessageCreateListener {
             replyFormat = getHexColors(replyFormat);
         }
         message = getMentionNicks(message,gmre.getServer().orElse(null), msg.getMentionedUsers());
-        if(!isReply)
-            plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),author.getDisplayName(),message));
-        else
-            plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat),author.getDisplayName(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),message));
         DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
         plugin.getServer().getPluginManager().callEvent(dcevent);
         if(dcevent.isCancelled() || dcevent.getMessage().isEmpty())
             return;
+        if(!isReply)
+            plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),dcevent.getUser(),dcevent.getMessage()));
+        else
+            plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat),dcevent.getUser(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),dcevent.getMessage()));
         for(Player p : dcevent.getPlayers()){
             if(!isReply)
                 p.sendMessage(String.format(c(chatFormat),dcevent.getUser(),format(ChatColor.stripColor(dcevent.getMessage()))));
