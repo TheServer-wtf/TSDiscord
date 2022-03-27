@@ -17,6 +17,7 @@ import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.webhook.Webhook;
+import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandBuilder;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.listener.channel.server.ServerChannelDeleteListener;
@@ -43,7 +44,6 @@ public class BotHandler {
     public static boolean shutdown = false;
     public static int task = -1;
     private static boolean started = false;
-    private static final List<CompletableFuture> updates = new ArrayList<>();
     protected static void startup(DiscordApi bot){
         BotHandler.bot = bot;
         FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
@@ -62,6 +62,9 @@ public class BotHandler {
             }
             commands.add(builder);
         }
+        /*BotHandler.bot.getServers().forEach(server -> {
+            SlashCommand command = SlashCommand.with("cmdName","description").createForServer(server).join();
+        });*/
         BotHandler.bot.bulkOverwriteGlobalSlashCommands(commands).join();
     }
     protected static void started(){
@@ -132,7 +135,6 @@ public class BotHandler {
                 () -> {
                     if(shutdown)
                         return;
-                    //startTask();
                     changeTopic();
                 }, 0, time);
         if(task == -1){
@@ -142,10 +144,6 @@ public class BotHandler {
     private static void changeTopic(){
         if(bot == null || shutdown)
             return;
-        updates.removeIf(CompletableFuture::isDone);
-        if(!updates.isEmpty()) {
-            return;
-        }
         int online = TSDiscordPlugin.getPlugin().getServer().getOnlinePlayers().size();
         int max = TSDiscordPlugin.getPlugin().getServer().getMaxPlayers();
         String timeFormat = TSDiscordPlugin.getPlugin().getConfig().getString("message.time","dd/MM/yyyy HH:mm:ss");
@@ -186,6 +184,7 @@ public class BotHandler {
                             message = tc.getMessageById(statusId).join();
                         } catch (CompletionException ignored){}
                         if (message == null) {
+                            TSDiscordPlugin.getPlugin().sendDebug("Status message with ID '"+statusId+"' not found");
                             if(!oldId) {
                                 important.set("statusId." + c, null);
                                 try {
@@ -404,7 +403,8 @@ public class BotHandler {
                 builder.setAvatarUrl(avatarUrl);
             else
                 builder.setAvatarUrl(String.format(DEF_AVATAR,"MHF_ALEX",(System.currentTimeMillis()/1000)));
-            builder.setContent(message);
+            String msg = message.replace("@","\\@ ");
+            builder.setContent(msg);
             List<MessageAttachment> attachments = original != null ? original.getAttachments() : null;
             if(attachments != null && !attachments.isEmpty()){
                 AtomicInteger failed = new AtomicInteger();

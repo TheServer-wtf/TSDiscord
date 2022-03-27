@@ -5,15 +5,15 @@
     <parent>
         <artifactId>TSDiscord</artifactId>
         <groupId>hu.Pdani</groupId>
-        <version>0.19.7</version>
+        <version>0.19.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>TSDiscordPlugin</artifactId>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
     </properties>
 
     <dependencies>
