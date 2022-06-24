@@ -20,6 +20,9 @@ public class ImportantConfig {
         config = YamlConfiguration.loadConfiguration(configFile);
     }
     public static void reloadConfig(){
+        try {
+            saveConfig();
+        } catch (IOException ignored) {}
         config = null;
         configFile = null;
         loadConfig();

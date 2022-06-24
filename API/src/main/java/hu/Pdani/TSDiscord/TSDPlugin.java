@@ -2,7 +2,7 @@ package hu.Pdani.TSDiscord;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-
+/// TODO: Split the API into a separate project
 public abstract class TSDPlugin extends JavaPlugin {
     private static TSDPlugin plugin = null;
     void onEnable(TSDPlugin self){

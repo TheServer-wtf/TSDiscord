@@ -84,7 +84,6 @@ public class DiscordListener implements Listener, MessageCreateListener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e){
-        TSDiscordPlugin.getPlugin().sendDebug("PlayerChatEvent received!");
         if(!e.isCancelled())
             BotHandler.chat(e.getPlayer(),e.getMessage());
     }
@@ -112,7 +111,6 @@ public class DiscordListener implements Listener, MessageCreateListener {
         String message = msg.getReadableContent();
         if(author.isWebhook() || author.isBotUser() || author.isYourself() || message.isEmpty())
             return;
-        TSDiscordPlugin.getPlugin().sendDebug("Message received!");
         boolean isReply = msg.getReferencedMessage().isPresent();
         String chatFormat = plugin.getConfig().getString("chatFormat.normal","&8[&eDISCORD&8] &a{user}: &f{msg}");
         String replyFormat = plugin.getConfig().getString("chatFormat.reply","&8[&eDISCORD&8] &a{user} replied to {target}: &f{msg}");

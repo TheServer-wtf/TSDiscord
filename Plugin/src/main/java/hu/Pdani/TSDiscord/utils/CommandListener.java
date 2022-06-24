@@ -36,6 +36,7 @@ public class CommandListener implements CommandExecutor, SlashCommandCreateListe
                 TSDiscordPlugin.getPlugin().reloadConfig();
                 ImportantConfig.reloadConfig();
                 sender.sendMessage("Config reloaded.");
+                return true;
             }
         }
         sender.sendMessage(ChatColor.GOLD+"TSDiscord v"+TSDiscordPlugin.getPlugin().getDescription().getVersion());

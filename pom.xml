@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.19.8</version>
+    <version>0.20.0</version>
     <modules>
         <module>API</module>
         <module>Plugin</module>
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations-java5</artifactId>
-            <version>22.0.0</version>
+            <version>23.0.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -51,7 +51,7 @@
         <repository>
             <id>theserver-repo</id>
             <name>releases</name>
-            <url>http://repo.pdani.hu/repository/theserver</url>
+            <url>https://repo.pghost.org/repository/theserver</url>
         </repository>
     </distributionManagement>
 

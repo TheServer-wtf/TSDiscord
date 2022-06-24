@@ -222,9 +222,9 @@ public class TSDiscordPlugin extends TSDPlugin {
     }
 
     public void sendDebug(String msg){
-        debug.forEach((target)->target.sendMessage(msg));
+        debug.forEach((target)->target.sendMessage("["+getLogger().getName()+"] DEBUG: "+msg));
         if(getConfig().getBoolean("consoleDebug",false))
-            getLogger().info(msg);
+            getLogger().info("DEBUG: "+msg);
     }
 
     private void startTps(){

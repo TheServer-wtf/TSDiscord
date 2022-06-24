@@ -1,6 +1,7 @@
 package hu.Pdani.TSDiscord;
 
 import club.minnced.discord.webhook.WebhookClient;
+import club.minnced.discord.webhook.send.AllowedMentions;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
@@ -65,7 +66,7 @@ public class BotHandler {
         /*BotHandler.bot.getServers().forEach(server -> {
             SlashCommand command = SlashCommand.with("cmdName","description").createForServer(server).join();
         });*/
-        BotHandler.bot.bulkOverwriteGlobalSlashCommands(commands).join();
+        BotHandler.bot.bulkOverwriteGlobalApplicationCommands(commands).join();
     }
     protected static void started(){
         if(bot == null)
@@ -141,6 +142,7 @@ public class BotHandler {
             changeTopic();
         }
     }
+    private static final HashMap<String,Integer> MsgFailAttempt = new HashMap<>();
     private static void changeTopic(){
         if(bot == null || shutdown)
             return;
@@ -163,12 +165,7 @@ public class BotHandler {
                 TextChannel tc = TSDiscordPlugin.getDiscordBot().getTextChannelById(c).orElse(null);
                 if (tc != null) {
                     FileConfiguration important = ImportantConfig.getConfig();
-                    boolean oldId = false;
                     String statusId = important.getString("statusId." + c, "");
-                    if(important.isString("statusId")) {
-                        oldId = true;
-                        statusId = important.getString("statusId");
-                    }
                     EmbedBuilder embed = new EmbedBuilder();
                     String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title", "Current Server Status");
                     embed.setTitle(title);
@@ -184,8 +181,10 @@ public class BotHandler {
                             message = tc.getMessageById(statusId).join();
                         } catch (CompletionException ignored){}
                         if (message == null) {
-                            TSDiscordPlugin.getPlugin().sendDebug("Status message with ID '"+statusId+"' not found");
-                            if(!oldId) {
+                            int attempt = MsgFailAttempt.getOrDefault(c,0);
+                            TSDiscordPlugin.getPlugin().sendDebug("Status message with ID '"+statusId+"' not found (Attempt #"+attempt+1+")");
+                            if(attempt+1 >= 5) {
+                                TSDiscordPlugin.getPlugin().sendDebug("Removing message ID from storage (5 failed attempts)");
                                 important.set("statusId." + c, null);
                                 try {
                                     ImportantConfig.saveConfig();
@@ -193,17 +192,11 @@ public class BotHandler {
                                     TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
                                 }
                                 ImportantConfig.reloadConfig();
+                                MsgFailAttempt.remove(c);
+                            } else {
+                                MsgFailAttempt.put(c,attempt+1);
                             }
                             return;
-                        }
-                        if(oldId){
-                            important.set("statusId." + c, statusId);
-                            try {
-                                ImportantConfig.saveConfig();
-                            } catch (IOException e) {
-                                TSDiscordPlugin.getPlugin().getLogger().warning("Unable to save 'donotmodify.yml' to disk: " + e.toString());
-                            }
-                            ImportantConfig.reloadConfig();
                         }
                         message.edit(embed);
                     } else {
@@ -297,9 +290,8 @@ public class BotHandler {
             TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: BOT is null !!!");
             return;
         }
-        message = ChatColor.stripColor(message);
         boolean modify = false;
-        String player = ChatColor.stripColor(user.getDisplayName());
+        String player = user.getDisplayName();
         String group = null;
         String avatar = String.format(DEF_AVATAR,user.getUniqueId().toString(),(System.currentTimeMillis()/1000));
         if(TSDiscordPlugin.getVaultPerms() != null) {
@@ -398,12 +390,13 @@ public class BotHandler {
             }
             WebhookClient client = WebhookClient.withId(hook.getId(),hook.asIncomingWebhook().get().getToken());
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
-            builder.setUsername(escapeName(name));
+            builder.setAllowedMentions(AllowedMentions.none());
+            builder.setUsername(ChatColor.stripColor(escapeName(name)));
             if(avatarUrl != null)
                 builder.setAvatarUrl(avatarUrl);
             else
                 builder.setAvatarUrl(String.format(DEF_AVATAR,"MHF_ALEX",(System.currentTimeMillis()/1000)));
-            String msg = message.replace("@","\\@ ");
+            String msg = ChatColor.stripColor(message);
             builder.setContent(msg);
             List<MessageAttachment> attachments = original != null ? original.getAttachments() : null;
             if(attachments != null && !attachments.isEmpty()){
