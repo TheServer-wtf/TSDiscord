@@ -20,11 +20,14 @@ import org.javacord.api.entity.user.User;
 import org.javacord.api.entity.webhook.Webhook;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,7 +112,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
         Message msg = gmre.getMessage();
         MessageAuthor author = gmre.getMessageAuthor();
         String message = msg.getReadableContent();
-        if(author.isWebhook() || author.isBotUser() || author.isYourself() || message.isEmpty())
+        if(!author.isRegularUser() || message.isEmpty())
             return;
         boolean isReply = msg.getReferencedMessage().isPresent();
         String chatFormat = plugin.getConfig().getString("chatFormat.normal","&8[&eDISCORD&8] &a{user}: &f{msg}");
@@ -128,7 +131,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
             replyFormat = getHexColors(replyFormat);
         }
         message = getMentionNicks(message,gmre.getServer().orElse(null), msg.getMentionedUsers());
-        DiscordChatEvent dcevent = new DiscordChatEvent(author.getDisplayName(),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
+        DiscordChatEvent dcevent = new DiscordChatEvent(getUserNick(Objects.requireNonNull(gmre.getServer().orElse(null)), Objects.requireNonNull(author.asUser().orElse(null))),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
         plugin.getServer().getPluginManager().callEvent(dcevent);
         if(dcevent.isCancelled() || dcevent.getMessage().isEmpty())
             return;
@@ -193,7 +196,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
     }
 
     private String getMentionNicks(String text, Server server, List<User> mentioned){
-        Pattern hexPattern = Pattern.compile("<@!([0-9]+)>");
+        Pattern hexPattern = Pattern.compile("<@([0-9]+)>");
         Matcher matcher = hexPattern.matcher(text);
         StringBuffer result = new StringBuffer();
         while (matcher.find()) {
@@ -212,5 +215,9 @@ public class DiscordListener implements Listener, MessageCreateListener {
         matcher.appendTail(result);
         text = result.toString();
         return text;
+    }
+
+    private String getUserNick(@NotNull Server server, @NotNull User user) {
+        return user.getNickname(server).orElse(user.getDisplayName(server));
     }
 }

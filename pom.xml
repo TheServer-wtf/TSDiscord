@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.20.0</version>
+    <version>0.21.0</version>
     <modules>
         <module>API</module>
         <module>Plugin</module>
@@ -41,9 +41,12 @@
             <url>https://jitpack.io</url>
         </repository>
         <repository>
-            <name>jcenter</name>
             <id>bintray-jcenter</id>
             <url>https://jcenter.bintray.com</url>
+        </repository>
+        <repository>
+            <id>theserver-repo</id>
+            <url>https://repo.pghost.org/repository/theserver</url>
         </repository>
     </repositories>
 

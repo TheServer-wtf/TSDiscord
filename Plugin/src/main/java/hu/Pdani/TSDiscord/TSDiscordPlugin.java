@@ -11,9 +11,6 @@ import hu.Pdani.TSDiscord.utils.Updater;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -22,12 +19,11 @@ import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.jetbrains.annotations.NotNull;
+import wtf.TheServer.TSCPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TSDiscordPlugin extends TSDPlugin {
     private static DiscordApi bot;
@@ -38,6 +34,7 @@ public class TSDiscordPlugin extends TSDPlugin {
     private static Permission perms = null;
     private static Chat chat = null;
     public ArrayList<Player> debug = new ArrayList<>();
+    private static TSCPlugin central;
 
     @Override
     public void onLoad() {
@@ -52,6 +49,9 @@ public class TSDiscordPlugin extends TSDPlugin {
         addNewConfigOptions();
         super.onEnable(this);
         plugin = this;
+        if(getServer().getPluginManager().isPluginEnabled("TSCentralPlugin")){
+            central = (TSCPlugin) getServer().getPluginManager().getPlugin("TSCentralPlugin");
+        }
         Updater updater = new Updater("TheServer-wtf/TSDiscord");
         startUpdateCheck(updater);
         ImportantConfig.loadConfig();
@@ -111,44 +111,8 @@ public class TSDiscordPlugin extends TSDPlugin {
         chat = rsp.getProvider();
     }
     private void addNewConfigOptions(){
-        Configuration dc = getConfig().getDefaults();
-        if(dc == null){
-            getLogger().severe("Default config file not found! Try re-installing the plugin?");
-            return;
-        }
-        ConfigurationSection def = dc.getDefaultSection();
-        if(def == null){
-            getLogger().severe("Invalid default config file! Try re-installing the plugin?");
-            return;
-        }
-        Set<String> list = def.getKeys(false);
-        ConfigurationSection config = getConfig().getDefaultSection();
-        if(config == null){
-            getLogger().severe("Invalid config file on disk! Is this the first time the plugin is running?");
-            return;
-        }
-        Set<String> current = config.getKeys(false);
-        AtomicBoolean hasChange = new AtomicBoolean(false);
-        for(String name : list){
-            if(!current.contains(name)){
-                hasChange.set(true);
-                setConfig(name, def);
-            }
-        }
-        if(hasChange.get()){
-            saveConfig();
-        }
-    }
-    private void setConfig(String name, ConfigurationSection def){
-        if(def.isConfigurationSection(name)){
-            ConfigurationSection child = def.getConfigurationSection(name);
-            for(String cn : child.getKeys(false)){
-                setConfig(cn,def);
-            }
-        } else {
-            Object value = def.get(name);
-            getConfig().set(name,value);
-        }
+        getConfig().options().copyDefaults(true);
+        saveConfig();
     }
 
 
@@ -166,6 +130,13 @@ public class TSDiscordPlugin extends TSDPlugin {
         return chat;
     }
 
+    public TSCPlugin getCentral() {
+        return getCentralPlugin();
+    }
+    public static TSCPlugin getCentralPlugin() {
+        return central;
+    }
+
     public static TSDiscordPlugin getPlugin(){
         return plugin;
     }
@@ -173,7 +144,6 @@ public class TSDiscordPlugin extends TSDPlugin {
     public DiscordApi getBot(){
         return getDiscordBot();
     }
-
     public static DiscordApi getDiscordBot(){
         return bot;
     }

@@ -5,7 +5,7 @@ authors: [Pdani]
 website: 'theserver.wtf'
 api-version: '1.17'
 description: 'A Discord link plugin written for TheServer.wtf'
-softdepend: [Vault]
+softdepend: [Vault,TSCentralPlugin]
 commands:
   tsdiscord:
     description: 'Main plugin command for TSDiscord'

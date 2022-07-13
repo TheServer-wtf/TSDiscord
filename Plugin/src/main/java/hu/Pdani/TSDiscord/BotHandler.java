@@ -40,7 +40,8 @@ import java.util.regex.Pattern;
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
 public class BotHandler {
-    private static final String DEF_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay&v=%2$d";
+    private static final String DEF_AVATAR = "https://pdani.hu/mcauth/render.php?url=%1$s&size=300&helm";
+    private static final String FALLBACK_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay";
     private static DiscordApi bot;
     public static boolean shutdown = false;
     public static int task = -1;
@@ -293,7 +294,11 @@ public class BotHandler {
         boolean modify = false;
         String player = user.getDisplayName();
         String group = null;
-        String avatar = String.format(DEF_AVATAR,user.getUniqueId().toString(),(System.currentTimeMillis()/1000));
+        String avatar = "";
+        if(TSDiscordPlugin.getCentralPlugin() != null)
+            avatar = String.format(DEF_AVATAR,TSDiscordPlugin.getCentralPlugin().getPlayerSkin(user.getUniqueId()));
+        else
+            avatar = String.format(FALLBACK_AVATAR,user.getUniqueId(),(System.currentTimeMillis()/1000));
         if(TSDiscordPlugin.getVaultPerms() != null) {
             try {
                 group = TSDiscordPlugin.getVaultPerms().getPrimaryGroup(user);
@@ -398,6 +403,7 @@ public class BotHandler {
                 builder.setAvatarUrl(String.format(DEF_AVATAR,"MHF_ALEX",(System.currentTimeMillis()/1000)));
             String msg = ChatColor.stripColor(message);
             builder.setContent(msg);
+            builder.resetEmbeds();
             List<MessageAttachment> attachments = original != null ? original.getAttachments() : null;
             if(attachments != null && !attachments.isEmpty()){
                 AtomicInteger failed = new AtomicInteger();
@@ -412,7 +418,7 @@ public class BotHandler {
                         if(builder.getFileAmount()+ failed.get() == attachments.size()){
                             if(client.isShutdown())
                                 return;
-                            client.send(builder.build()).join().getId();
+                            client.send(builder.build()).join();
                             client.close();
                         }
                     });
