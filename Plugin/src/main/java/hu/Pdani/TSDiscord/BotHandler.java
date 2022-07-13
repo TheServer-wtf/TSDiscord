@@ -41,7 +41,7 @@ import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
 public class BotHandler {
     private static final String DEF_AVATAR = "https://pdani.hu/mcauth/render.php?url=%1$s&size=300&helm";
-    private static final String FALLBACK_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay";
+    private static final String FALLBACK_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay&v=%2$d";
     private static DiscordApi bot;
     public static boolean shutdown = false;
     public static int task = -1;
@@ -399,8 +399,9 @@ public class BotHandler {
             builder.setUsername(ChatColor.stripColor(escapeName(name)));
             if(avatarUrl != null)
                 builder.setAvatarUrl(avatarUrl);
-            else
-                builder.setAvatarUrl(String.format(DEF_AVATAR,"MHF_ALEX",(System.currentTimeMillis()/1000)));
+            else {
+                builder.setAvatarUrl(String.format(FALLBACK_AVATAR, "MHF_ALEX", (System.currentTimeMillis() / 1000)));
+            }
             String msg = ChatColor.stripColor(message);
             builder.setContent(msg);
             builder.resetEmbeds();
