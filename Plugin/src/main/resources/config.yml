@@ -15,8 +15,6 @@ message:
     starting: 'Startup...'
   shutdown: ':octagonal_sign: Server shutdown.'
   startup: ':white_check_mark: Server started.'
-  join: '%player% joined the server.'
-  leave: '%player% left the server.'
   time: 'dd/MM/yyyy HH:mm:ss'
   status:
     update: 2

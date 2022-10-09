@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -45,11 +46,12 @@ public class DiscordListener implements Listener, MessageCreateListener {
         return name;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event){
         if(!BotHandler.isEnabled() || BotHandler.shutdown)
             return;
-        String join = plugin.getConfig().getString("message.join","%player% joined the server.");
+        if(event.getJoinMessage() == null || event.getJoinMessage().isEmpty())
+            return;
         boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
         List<String> channels = new ArrayList<>();
@@ -60,16 +62,17 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 channels.add(channel);
         }
         if(!channels.isEmpty()) {
-            String msg = "**`" + join.replace("%player%", escapeName(event.getPlayer().getName())) + "`**";
+            String msg = "**`" + ChatColor.stripColor(event.getJoinMessage()) + "`**";
             channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onLeave(PlayerQuitEvent event){
         if(!BotHandler.isEnabled() || BotHandler.shutdown)
             return;
-        String quit = plugin.getConfig().getString("message.leave","%player% left the server.");
+        if(event.getQuitMessage() == null || event.getQuitMessage().isEmpty())
+            return;
         boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
         List<String> channels = new ArrayList<>();
@@ -80,12 +83,12 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 channels.add(channel);
         }
         if(!channels.isEmpty()) {
-            String msg = "**`" + quit.replace("%player%", escapeName(event.getPlayer().getName())) + "`**";
+            String msg = "**`" + ChatColor.stripColor(event.getQuitMessage()) + "`**";
             channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onChat(AsyncPlayerChatEvent e){
         if(!e.isCancelled())
             BotHandler.chat(e.getPlayer(),e.getMessage());
@@ -198,7 +201,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
     private String getMentionNicks(String text, Server server, List<User> mentioned){
         Pattern hexPattern = Pattern.compile("<@([0-9]+)>");
         Matcher matcher = hexPattern.matcher(text);
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         while (matcher.find()) {
             User user = null;
             for(User m : mentioned) {

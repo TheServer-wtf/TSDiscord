@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
@@ -274,7 +275,7 @@ public class BotHandler {
     }
 
     private static String escapeName(String name){
-        name = name.replaceAll(Pattern.quote("_"),"\\_");
+        name = name.replace("_","\\_");
         return name;
     }
 
@@ -363,15 +364,21 @@ public class BotHandler {
             }
             String hookId = important.getString("webhooks." + tc.getId(), "");
             if (hookId.isEmpty()) {
-                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").setAvatar(bot.getYourself().getAvatar()).create().join();
-                hookId = webhook.getIdAsString();
-                important.set("webhooks." + tc.getId(), hookId);
-                modify = true;
+                try {
+                    Webhook webhook = tc.createWebhookBuilder().setName("TheServer bot hook").setAvatar(bot.getYourself().getAvatar()).create().join();
+                    hookId = webhook.getIdAsString();
+                    important.set("webhooks." + tc.getId(), hookId);
+                    modify = true;
+                } catch (Exception e){
+                    TSDiscordPlugin.getPlugin().getLogger().log(Level.SEVERE,"Failed to create webhook for channel `"+c+"`:",e);
+                }
             }
-            DiscordChatEvent event = new DiscordChatEvent(player, message, user);
-            TSDiscordPlugin.getPlugin().getServer().getPluginManager().callEvent(event);
-            if(!event.isCancelled() && !event.getMessage().isEmpty())
-                sendWebhook(hookId, event.getMessage(), event.getUser(), avatar);
+            if(!hookId.isEmpty()) {
+                DiscordChatEvent event = new DiscordChatEvent(player, message, user);
+                TSDiscordPlugin.getPlugin().getServer().getPluginManager().callEvent(event);
+                if (!event.isCancelled() && !event.getMessage().isEmpty())
+                    sendWebhook(hookId, event.getMessage(), event.getUser(), avatar);
+            }
         }
         TSDiscordPlugin.getPlugin().saveConfig();
         if(modify){
