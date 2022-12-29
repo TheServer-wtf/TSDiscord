@@ -31,7 +31,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,7 +57,7 @@ public class BotHandler {
             BotHandler.bot.updateActivity(ActivityType.WATCHING,online);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
         BotHandler.bot.addSlashCommandCreateListener(TSDiscordPlugin.cl);
-        List<SlashCommandBuilder> commands = new ArrayList<>();
+        Set<SlashCommandBuilder> commands = new HashSet<>();
         for(String label : CommandManager.getList()){
             ProgramCommand command = CommandManager.get(label);
             SlashCommandBuilder builder = new SlashCommandBuilder().setName(label).setDescription(command.getDescription());
@@ -274,8 +276,12 @@ public class BotHandler {
         bot.disconnect();
     }
 
+    /**
+     * @deprecated do not use this method anymore, discord (most likely) fixed this
+     * @param name the username to escape
+     * @return originally the escaped username, now the same name as given
+     */
     private static String escapeName(String name){
-        name = name.replace("_","\\_");
         return name;
     }
 
@@ -296,8 +302,9 @@ public class BotHandler {
         String player = user.getDisplayName();
         String group = null;
         String avatar = "";
-        if(TSDiscordPlugin.getCentralPlugin() != null)
-            avatar = String.format(DEF_AVATAR,TSDiscordPlugin.getCentralPlugin().getPlayerSkin(user.getUniqueId()));
+        String skin = (TSDiscordPlugin.getCentralPlugin() != null) ? TSDiscordPlugin.getCentralPlugin().getPlayerSkin(user.getUniqueId()) : null;
+        if(skin != null && !skin.isEmpty())
+            avatar = String.format(DEF_AVATAR,skin);
         else
             avatar = String.format(FALLBACK_AVATAR,user.getUniqueId(),(System.currentTimeMillis()/1000));
         if(TSDiscordPlugin.getVaultPerms() != null) {
@@ -416,7 +423,7 @@ public class BotHandler {
             if(attachments != null && !attachments.isEmpty()){
                 AtomicInteger failed = new AtomicInteger();
                 for(MessageAttachment a : attachments){
-                    a.downloadAsByteArray().whenComplete((bytes,throwable)->{
+                    a.asByteArray().whenComplete((bytes,throwable)->{
                         if(throwable != null) {
                             failed.getAndIncrement();
                         } else {

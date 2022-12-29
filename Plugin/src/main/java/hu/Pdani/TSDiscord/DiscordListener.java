@@ -54,17 +54,20 @@ public class DiscordListener implements Listener, MessageCreateListener {
             return;
         boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
-        List<String> channels = new ArrayList<>();
+        List<String> channels;
         if(isList) {
             channels = plugin.getConfig().getStringList("channels.main");
         } else {
+            channels = new ArrayList<>();
             if(!channel.isEmpty())
                 channels.add(channel);
         }
-        if(!channels.isEmpty()) {
-            String msg = "**`" + ChatColor.stripColor(event.getJoinMessage()) + "`**";
-            channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
-        }
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin,()->{
+            if(!channels.isEmpty()) {
+                String msg = "**`" + ChatColor.stripColor(event.getJoinMessage()) + "`**";
+                channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -75,17 +78,20 @@ public class DiscordListener implements Listener, MessageCreateListener {
             return;
         boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
-        List<String> channels = new ArrayList<>();
+        List<String> channels;
         if(isList) {
             channels = plugin.getConfig().getStringList("channels.main");
         } else {
+            channels = new ArrayList<>();
             if(!channel.isEmpty())
                 channels.add(channel);
         }
-        if(!channels.isEmpty()) {
-            String msg = "**`" + ChatColor.stripColor(event.getQuitMessage()) + "`**";
-            channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
-        }
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin,()->{
+            if(!channels.isEmpty()) {
+                String msg = "**`" + ChatColor.stripColor(event.getQuitMessage()) + "`**";
+                channels.forEach((c)->plugin.getBot().getTextChannelById(c).ifPresent(tc -> tc.sendMessage(msg).join()));
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
