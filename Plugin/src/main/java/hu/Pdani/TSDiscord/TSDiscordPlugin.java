@@ -18,6 +18,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.intent.Intent;
 import org.jetbrains.annotations.NotNull;
 import wtf.TheServer.TSCPlugin;
 
@@ -58,7 +59,7 @@ public class TSDiscordPlugin extends TSDPlugin {
         cl = new CommandListener();
         String token = getConfig().getString("token","");
         if(!token.isEmpty()) {
-            new DiscordApiBuilder().setToken(token).login().whenComplete((api, error) -> {
+            new DiscordApiBuilder().setToken(token).addIntents(Intent.MESSAGE_CONTENT).login().whenComplete((api, error) -> {
                 if(error != null){
                     getLogger().severe(String.format("There was an error trying to login to the bot: %s",error));
                     return;
