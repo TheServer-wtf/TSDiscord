@@ -45,16 +45,16 @@
             <url>https://jcenter.bintray.com</url>
         </repository>
         <repository>
-            <id>theserver-repo</id>
-            <url>https://repo.pghost.org/repository/theserver</url>
+            <id>pghost-repository-theserver</id>
+            <url>https://repo.pghost.org/theserver</url>
         </repository>
     </repositories>
 
     <distributionManagement>
         <repository>
-            <id>theserver-repo</id>
-            <name>releases</name>
-            <url>https://repo.pghost.org/repository/theserver</url>
+            <id>pghost-repository-theserver</id>
+            <name>PGHost.org Repository</name>
+            <url>https://repo.pghost.org/theserver</url>
         </repository>
     </distributionManagement>
 

@@ -16,8 +16,8 @@
 ### Maven repository
 ```xml
 <repository>
-    <id>theserver-repo</id>
-    <url>http://repo.pdani.hu/repository/theserver/</url>
+  <id>pghost-repository-theserver</id>
+  <url>https://repo.pghost.org/theserver/</url>
 </repository>
 ```
 
