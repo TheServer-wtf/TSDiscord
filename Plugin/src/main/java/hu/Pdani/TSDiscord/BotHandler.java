@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
 public class BotHandler {
-    private static final String DEF_AVATAR = "https://pdani.hu/mcauth/render.php?url=%1$s&size=300&helm";
+    private static final String DEF_AVATAR = "https://pghost.org/avatar/?url=%1$s&size=300&helm";
     private static final String FALLBACK_AVATAR = "https://crafatar.com/avatars/%1$s?size=300&default=MHF_Steve&overlay&v=%2$d";
     private static DiscordApi bot;
     public static boolean shutdown = false;
@@ -276,15 +276,6 @@ public class BotHandler {
         bot.disconnect();
     }
 
-    /**
-     * @deprecated do not use this method anymore, discord (most likely) fixed this
-     * @param name the username to escape
-     * @return originally the escaped username, now the same name as given
-     */
-    private static String escapeName(String name){
-        return name;
-    }
-
     private static final HashMap<String, ServerTextChannel> textChannelMap = new HashMap<>();
     private static final HashMap<String, ListenerManager> listenerMap = new HashMap<>();
 
@@ -410,7 +401,7 @@ public class BotHandler {
             WebhookClient client = WebhookClient.withId(hook.getId(),hook.asIncomingWebhook().get().getToken());
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
             builder.setAllowedMentions(AllowedMentions.none());
-            builder.setUsername(ChatColor.stripColor(escapeName(name)));
+            builder.setUsername(ChatColor.stripColor(name));
             if(avatarUrl != null)
                 builder.setAvatarUrl(avatarUrl);
             else {

@@ -1,8 +1,11 @@
 /target/
 /.idea/
 /TSDiscordMVN.iml
+/TSDiscord.iml
 /lib/
 /Plugin/Plugin.iml
+/Plugin/TSDiscordPlugin.iml
 /Plugin/target/
 /API/API.iml
+/API/TSDiscordAPI.iml
 /API/target/

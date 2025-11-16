@@ -2,7 +2,7 @@ package hu.Pdani.TSDiscord;
 
 import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;

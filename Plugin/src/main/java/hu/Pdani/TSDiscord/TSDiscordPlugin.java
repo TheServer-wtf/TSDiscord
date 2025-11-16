@@ -229,7 +229,7 @@ public class TSDiscordPlugin extends TSDPlugin {
                     } else {
                         getLogger().info("You are running the latest version.");
                     }
-                },0,20L*3600);
+                },0,20L*43200);
         if(id == -1){
             getLogger().severe("Failed to check for new version: Unable to schedule task.");
         }
