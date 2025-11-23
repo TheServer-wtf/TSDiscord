@@ -47,24 +47,10 @@ public class CommandListener implements CommandExecutor, SlashCommandCreateListe
     @Override
     public void onSlashCommandCreate(SlashCommandCreateEvent cmdEvent) {
         SlashCommandInteraction interaction = cmdEvent.getSlashCommandInteraction();
-        if(!interaction.getChannel().isPresent())
-            return;
-        TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
-        TextChannel textChannel = interaction.getChannel().get();
-        boolean isList = plugin.getConfig().isList("channels.main");
-        String channel = plugin.getConfig().getString("channels.main","");
-        List<String> channels = new ArrayList<>();
-        if(isList) {
-            channels = plugin.getConfig().getStringList("channels.main");
-        } else {
-            if(!channel.isEmpty())
-                channels.add(channel);
-        }
-        if(!channels.contains(textChannel.getIdAsString())) {
-            return;
-        }
         ProgramCommand cmd = CommandManager.get(interaction.getCommandName());
-        if(cmd != null)
-            cmd.run(interaction.createImmediateResponder(), interaction.getOptions());
+        if(cmd != null) {
+            TSDiscordPlugin.getPlugin().sendDebug("Handling command "+cmd.getLabel());
+            cmd.run(interaction.respondLater(cmd.isEphemeral()).join(), interaction.getOptions());
+        }
     }
 }

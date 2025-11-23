@@ -3,9 +3,14 @@ version: ${project.version}
 name: TSDiscord
 authors: [Pdani]
 website: 'theserver.wtf'
-api-version: '1.17'
+api-version: '1.20'
 description: 'A Discord link plugin written for TheServer.wtf'
 softdepend: [Vault,TSCentralPlugin]
+libraries:
+  - org.javacord:javacord:pom:3.8.0
+  - club.minnced:discord-webhooks:0.8.4
+  - org.apache.commons:commons-text:1.14.0
+  - com.squareup.okhttp3:okhttp:4.12.0
 commands:
   tsdiscord:
     description: 'Main plugin command for TSDiscord'

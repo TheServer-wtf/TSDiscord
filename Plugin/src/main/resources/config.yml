@@ -1,8 +1,7 @@
 token: ''
 channels:
-  main: ''
-  log: ''
-  status: ''
+  main: []
+  status: []
 roleIgnore: []
 hexColor: false
 consoleDebug: false
@@ -12,7 +11,6 @@ chatFormat:
 message:
   presence:
     online: 'Server'
-    starting: 'Startup...'
   shutdown: ':octagonal_sign: Server shutdown.'
   startup: ':white_check_mark: Server started.'
   time: 'dd/MM/yyyy HH:mm:ss'

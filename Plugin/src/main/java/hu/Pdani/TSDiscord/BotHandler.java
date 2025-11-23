@@ -17,6 +17,7 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.webhook.Webhook;
 import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandBuilder;
@@ -38,7 +39,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
 
@@ -51,17 +51,17 @@ public class BotHandler {
     private static boolean started = false;
     protected static void startup(DiscordApi bot){
         BotHandler.bot = bot;
-        FileConfiguration config = TSDiscordPlugin.getPlugin().getConfig();
-        String online = config.getString("message.presence.starting","Startup...");
-        if(!online.isEmpty())
-            BotHandler.bot.updateActivity(ActivityType.WATCHING,online);
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
         BotHandler.bot.addSlashCommandCreateListener(TSDiscordPlugin.cl);
         Set<SlashCommandBuilder> commands = new HashSet<>();
         for(String label : CommandManager.getList()){
+            TSDiscordPlugin.getPlugin().sendDebug("Adding command '"+label+"'");
             ProgramCommand command = CommandManager.get(label);
             SlashCommandBuilder builder = new SlashCommandBuilder().setName(label).setDescription(command.getDescription());
-            if(command.getOptions() != null && command.getOptions().size() > 0){
+            if(command.getDefaultPermissions().length > 0)
+                builder.setDefaultEnabledForPermissions(command.getDefaultPermissions());
+            builder.setEnabledInDms(false);
+            if(command.getOptions() != null && !command.getOptions().isEmpty()){
                 for(SlashCommandOption option : command.getOptions())
                     builder.addOption(option);
             }
@@ -70,12 +70,22 @@ public class BotHandler {
         /*BotHandler.bot.getServers().forEach(server -> {
             SlashCommand command = SlashCommand.with("cmdName","description").createForServer(server).join();
         });*/
-        BotHandler.bot.bulkOverwriteGlobalApplicationCommands(commands).join();
+        TSDiscordPlugin.getPlugin().sendDebug("Sending bulk command update");
+        BotHandler.bot.bulkOverwriteGlobalApplicationCommands(commands).whenComplete((cmd, error) -> {
+            if(error != null){
+                TSDiscordPlugin.getPlugin().sendDebug(String.format("There was an error trying to update commands: %s",error));
+                return;
+            }
+            TSDiscordPlugin.getPlugin().sendDebug("Global commands updated");
+        });
+        TSDiscordPlugin.getPlugin().getServer().getScheduler().runTaskLater(TSDiscordPlugin.getPlugin(),
+                BotHandler::started,1);
     }
     protected static void started(){
         if(bot == null)
             return;
         TSDiscordPlugin plugin = TSDiscordPlugin.getPlugin();
+        plugin.sendDebug("Startup finished");
         boolean isList = plugin.getConfig().isList("channels.main");
         String channel = plugin.getConfig().getString("channels.main","");
         List<String> channels = new ArrayList<>();

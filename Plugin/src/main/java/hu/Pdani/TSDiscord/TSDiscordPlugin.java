@@ -1,5 +1,7 @@
 package hu.Pdani.TSDiscord;
 
+import hu.Pdani.TSDiscord.cmds.AddChannelCommand;
+import hu.Pdani.TSDiscord.cmds.DelChannelCommand;
 import hu.Pdani.TSDiscord.cmds.OnlineCommand;
 import hu.Pdani.TSDiscord.cmds.TPSCommand;
 import hu.Pdani.TSDiscord.cmds.VersionCommand;
@@ -42,6 +44,8 @@ public class TSDiscordPlugin extends TSDPlugin {
         CommandManager.add(new TPSCommand());
         CommandManager.add(new OnlineCommand());
         CommandManager.add(new VersionCommand());
+        CommandManager.add(new AddChannelCommand());
+        CommandManager.add(new DelChannelCommand());
     }
 
     @Override
@@ -167,14 +171,14 @@ public class TSDiscordPlugin extends TSDPlugin {
                 }
             }
             messageLimit.put(sender,time);
-            boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
+            boolean isList = getConfig().isList("channels.main");
             List<String> channels = new ArrayList<>();
             if(!isList) {
-                String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+                String channel = getConfig().getString("channels.main","");
                 if(!channel.isEmpty())
                     channels.add(channel);
             } else {
-                channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
+                channels = getConfig().getStringList("channels.main");
             }
             if(channels.isEmpty()) {
                 return;
@@ -217,8 +221,6 @@ public class TSDiscordPlugin extends TSDPlugin {
                         }
                     }
                 }, 0, 1);
-        getServer().getScheduler().runTaskLater(this,
-                BotHandler::started,1);
     }
     private void startUpdateCheck(Updater updater){
         int id = getServer().getScheduler().scheduleAsyncRepeatingTask(this,

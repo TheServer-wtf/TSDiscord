@@ -189,19 +189,25 @@ public class DiscordListener implements Listener, MessageCreateListener {
         message = message.replaceAll("__(.+?)__",ChatColor.UNDERLINE+"$1"+ChatColor.RESET);
         message = message.replaceAll("_(.+?)_",ChatColor.ITALIC+"$1"+ChatColor.RESET);
         message = message.replaceAll("~~(.+?)~~",ChatColor.STRIKETHROUGH+"$1"+ChatColor.RESET);
+        message = message.replaceAll("\\|\\|(.+?)\\|\\|",ChatColor.MAGIC+"$1"+ChatColor.RESET);
         return message;
     }
 
     private String getHexColors(String text){
         Pattern hexPattern = Pattern.compile("#[A-Fa-f0-9]{6}");
         Matcher matcher = hexPattern.matcher(text);
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         while (matcher.find()) {
-            matcher.appendReplacement(result, net.md_5.bungee.api.ChatColor.of(matcher.group()).toString());
+            String hexCode = matcher.group();
+            StringBuilder color = new StringBuilder( '§' + "x" );
+            for ( char c : hexCode.substring( 1 ).toCharArray() )
+            {
+                color.append( '§' ).append( c );
+            }
+            matcher.appendReplacement(result, color.toString());
         }
         matcher.appendTail(result);
-        text = result.toString();
-        return text;
+        return result.toString();
     }
 
     private String getMentionNicks(String text, Server server, List<User> mentioned){

@@ -45,7 +45,7 @@ public class Updater {
                 StringBuilder sb = new StringBuilder();
                 while(scan.hasNext()){
                     sb.append(scan.nextLine());
-                    sb.append(System.getProperty("line.separator"));
+                    sb.append(System.lineSeparator());
                 }
                 Yaml yaml = new Yaml();
                 obj = yaml.load(sb.toString());
