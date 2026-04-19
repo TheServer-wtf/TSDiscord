@@ -7,15 +7,18 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.event.interaction.AutocompleteCreateEvent;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
+import org.javacord.api.interaction.AutocompleteInteraction;
 import org.javacord.api.interaction.SlashCommandInteraction;
+import org.javacord.api.listener.interaction.AutocompleteCreateListener;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommandListener implements CommandExecutor, SlashCommandCreateListener {
+public class CommandListener implements CommandExecutor, SlashCommandCreateListener, AutocompleteCreateListener {
     @Override
     public boolean onCommand(CommandSender sender, @NotNull Command cmd, @NotNull String alias, String[] args) {
         if(!sender.hasPermission("tsdiscord.admin"))
@@ -51,6 +54,16 @@ public class CommandListener implements CommandExecutor, SlashCommandCreateListe
         if(cmd != null) {
             TSDiscordPlugin.getPlugin().sendDebug("Handling command "+cmd.getLabel());
             cmd.run(interaction.respondLater(cmd.isEphemeral()).join(), interaction.getOptions());
+        }
+    }
+
+    @Override
+    public void onAutocompleteCreate(AutocompleteCreateEvent event) {
+        AutocompleteInteraction interaction = event.getAutocompleteInteraction();
+        ProgramCommand cmd = CommandManager.get(interaction.getCommandName());
+        if(cmd != null) {
+            TSDiscordPlugin.getPlugin().sendDebug("Handling autocomplete for command "+cmd.getLabel());
+            cmd.autocomplete(interaction);
         }
     }
 }

@@ -5,6 +5,7 @@ import hu.Pdani.TSDiscord.cmds.DelChannelCommand;
 import hu.Pdani.TSDiscord.cmds.OnlineCommand;
 import hu.Pdani.TSDiscord.cmds.TPSCommand;
 import hu.Pdani.TSDiscord.cmds.VersionCommand;
+import hu.Pdani.TSDiscord.exception.RateLimitException;
 import hu.Pdani.TSDiscord.utils.CommandListener;
 import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
@@ -46,6 +47,7 @@ public class TSDiscordPlugin extends TSDPlugin {
         CommandManager.add(new VersionCommand());
         CommandManager.add(new AddChannelCommand());
         CommandManager.add(new DelChannelCommand());
+        registerChannel(this,"main");
     }
 
     @Override
@@ -156,29 +158,49 @@ public class TSDiscordPlugin extends TSDPlugin {
     @Override
     public void onDisable() {
         BotHandler.end();
+        unregisterChannel(this,"main");
         getLogger().info("The plugin is now disabled.");
     }
 
     private final HashMap<JavaPlugin,Long> messageLimit = new HashMap<>();
 
     @Override
-    public void sendMessage(@NotNull JavaPlugin sender, @NotNull String message) throws IllegalAccessException {
+    public void sendMessage(@NotNull JavaPlugin sender, @NotNull String message) throws RateLimitException, IllegalCallerException {
+        if(!sender.equals(this))
+            throw new IllegalCallerException("Access to the main channel is restricted");
+        sendMessage(sender, "main", message);
+    }
+
+    public static final int RateLimit = 250;
+
+    @Override
+    public void sendMessage(@NotNull JavaPlugin sender, @NotNull String channelName, @NotNull String message) throws RateLimitException, IllegalCallerException, IllegalArgumentException {
+        if(!getChannelList().contains(channelName))
+            throw new IllegalArgumentException("no channel found with the given name");
+        if(!isChannelOwner(sender, channelName))
+            throw new IllegalCallerException("Access to the "+channelName+" channel is restricted");
         if(BotHandler.isEnabled()){
             long time = System.currentTimeMillis();
             if(messageLimit.containsKey(sender)){
-                if(messageLimit.get(sender) > time - 250) {
-                    throw new IllegalAccessException("Rate limit exceeded.");
+                if(messageLimit.get(sender) > time - RateLimit) {
+                    String finalChannelName = channelName;
+                    long rem = (messageLimit.get(sender) - (time - RateLimit));
+                    getServer().getScheduler().runTaskLaterAsynchronously(sender, () -> {
+                        sendMessage(sender, finalChannelName, message);
+                    }, (long)Math.max(1, Math.floor(rem/(1000/tps))));
+                    throw new RateLimitException("You must wait " + (messageLimit.get(sender) - (time - RateLimit)) + " ms");
                 }
             }
+            channelName = channelName.replace(".", "\\.");
             messageLimit.put(sender,time);
-            boolean isList = getConfig().isList("channels.main");
+            boolean isList = getConfig().isList("channels."+channelName);
             List<String> channels = new ArrayList<>();
             if(!isList) {
-                String channel = getConfig().getString("channels.main","");
+                String channel = getConfig().getString("channels."+channelName,"");
                 if(!channel.isEmpty())
                     channels.add(channel);
             } else {
-                channels = getConfig().getStringList("channels.main");
+                channels = getConfig().getStringList("channels."+channelName);
             }
             if(channels.isEmpty()) {
                 return;
@@ -190,6 +212,11 @@ public class TSDiscordPlugin extends TSDPlugin {
                 tc.sendMessage(message);
             }
         }
+    }
+
+    @Override
+    public void sendChat(@NotNull JavaPlugin sender, @NotNull String channelName, @NotNull Player user, @NotNull String message) throws IllegalCallerException, IllegalArgumentException {
+        BotHandler.sendChat(sender, channelName, user, message);
     }
 
     public static String c(String m){

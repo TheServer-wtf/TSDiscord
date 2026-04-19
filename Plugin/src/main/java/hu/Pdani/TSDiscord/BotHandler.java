@@ -10,6 +10,7 @@ import hu.Pdani.TSDiscord.utils.ProgramCommand;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.activity.ActivityType;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -17,9 +18,7 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.webhook.Webhook;
-import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandBuilder;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.listener.channel.server.ServerChannelDeleteListener;
@@ -34,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -53,6 +53,7 @@ public class BotHandler {
         BotHandler.bot = bot;
         BotHandler.bot.addMessageCreateListener(TSDiscordPlugin.dl);
         BotHandler.bot.addSlashCommandCreateListener(TSDiscordPlugin.cl);
+        BotHandler.bot.addAutocompleteCreateListener(TSDiscordPlugin.cl);
         Set<SlashCommandBuilder> commands = new HashSet<>();
         for(String label : CommandManager.getList()){
             TSDiscordPlugin.getPlugin().sendDebug("Adding command '"+label+"'");
@@ -290,17 +291,26 @@ public class BotHandler {
     private static final HashMap<String, ListenerManager> listenerMap = new HashMap<>();
 
     /**
-     * This method must only be called if a player sends a message in the minecraft chat
+     * MC -> DC
+     * @param sender the plugin
+     * @param channelName the name of the channel
      * @param user the Player
-     * @param message the sent message
+     * @param message the text message
      */
-    protected static void chat(Player user, String message){
+    public static void sendChat(JavaPlugin sender, String channelName, Player user, String message)
+        throws IllegalCallerException, IllegalArgumentException
+    {
         if(bot == null) {
             TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: BOT is null !!!");
             return;
         }
-        boolean modify = false;
-        String player = user.getDisplayName();
+        if(!TSDiscordPlugin.getPlugin().getChannelList().contains(channelName))
+            throw new IllegalArgumentException("no channel found with the given name");
+        if(!TSDiscordPlugin.getPlugin().isChannelOwner(sender, channelName))
+            throw new IllegalCallerException("Access to the "+channelName+" channel is restricted");
+        channelName = channelName.replace(".", "\\.").toLowerCase();
+        boolean updateWebhook = false;
+        String playerName = user.getDisplayName();
         String group = null;
         String avatar = "";
         String skin = (TSDiscordPlugin.getCentralPlugin() != null) ? TSDiscordPlugin.getCentralPlugin().getPlayerSkin(user.getUniqueId()) : null;
@@ -324,21 +334,21 @@ public class BotHandler {
         if(group != null && TSDiscordPlugin.getVaultChat() != null) {
             String prefix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupPrefix(user.getWorld(),group)));
             String suffix = ChatColor.stripColor(c(TSDiscordPlugin.getVaultChat().getGroupSuffix(user.getWorld(),group)));
-            player = (!userPrefix.isEmpty()) ? userPrefix + player : prefix + player;
-            player += (!userSuffix.isEmpty()) ? userSuffix : suffix;
+            playerName = (!userPrefix.isEmpty()) ? userPrefix + playerName : prefix + playerName;
+            playerName += (!userSuffix.isEmpty()) ? userSuffix : suffix;
         } else {
-            player = (!userPrefix.isEmpty()) ? userPrefix + player : "" + player;
-            player += (!userSuffix.isEmpty()) ? userSuffix : "";
+            playerName = (!userPrefix.isEmpty()) ? userPrefix + playerName : playerName;
+            playerName += (!userSuffix.isEmpty()) ? userSuffix : "";
         }
         FileConfiguration important = ImportantConfig.getConfig();
-        boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels.main");
+        boolean isList = TSDiscordPlugin.getPlugin().getConfig().isList("channels."+channelName);
         List<String> channels = new ArrayList<>();
         if(!isList) {
-            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels.main","");
+            String channel = TSDiscordPlugin.getPlugin().getConfig().getString("channels."+channelName,"");
             if(!channel.isEmpty())
                 channels.add(channel);
         } else {
-            channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels.main");
+            channels = TSDiscordPlugin.getPlugin().getConfig().getStringList("channels."+channelName);
         }
         if(channels.isEmpty()) {
             TSDiscordPlugin.getPlugin().sendDebug("Can't send chat: No channel set in config");
@@ -352,15 +362,16 @@ public class BotHandler {
                 tc = bot.getServerTextChannelById(c).orElse(null);
                 if(tc != null) {
                     List<String> finalChannels = channels;
+                    String finalChannelName = channelName;
                     ListenerManager<ServerChannelDeleteListener> mgr = tc.addServerChannelDeleteListener((event) -> {
                         if (event.getChannel().getIdAsString().equals(c)) {
                             textChannelMap.remove(c);
                             finalChannels.remove(c);
                             listenerMap.remove(c).remove();
                             if(isList)
-                                TSDiscordPlugin.getPlugin().getConfig().set("channels.main",finalChannels);
+                                TSDiscordPlugin.getPlugin().getConfig().set("channels."+ finalChannelName,finalChannels);
                             else
-                                TSDiscordPlugin.getPlugin().getConfig().set("channels.main","");
+                                TSDiscordPlugin.getPlugin().getConfig().set("channels." + finalChannelName,"");
                         }
                     });
                     listenerMap.put(c,mgr);
@@ -373,23 +384,23 @@ public class BotHandler {
             String hookId = important.getString("webhooks." + tc.getId(), "");
             if (hookId.isEmpty()) {
                 try {
-                    Webhook webhook = tc.createWebhookBuilder().setName("TheServer bot hook").setAvatar(bot.getYourself().getAvatar()).create().join();
+                    Webhook webhook = tc.createWebhookBuilder().setName("MC Server Hook").setAvatar(bot.getYourself().getAvatar()).create().join();
                     hookId = webhook.getIdAsString();
                     important.set("webhooks." + tc.getId(), hookId);
-                    modify = true;
+                    updateWebhook = true;
                 } catch (Exception e){
                     TSDiscordPlugin.getPlugin().getLogger().log(Level.SEVERE,"Failed to create webhook for channel `"+c+"`:",e);
                 }
             }
             if(!hookId.isEmpty()) {
-                DiscordChatEvent event = new DiscordChatEvent(player, message, user);
+                DiscordChatEvent event = new DiscordChatEvent(playerName, channelName, message, user);
                 TSDiscordPlugin.getPlugin().getServer().getPluginManager().callEvent(event);
                 if (!event.isCancelled() && !event.getMessage().isEmpty())
                     sendWebhook(hookId, event.getMessage(), event.getUser(), avatar);
             }
         }
         TSDiscordPlugin.getPlugin().saveConfig();
-        if(modify){
+        if(updateWebhook){
             try {
                 ImportantConfig.saveConfig();
             } catch (IOException ex) {
@@ -412,11 +423,7 @@ public class BotHandler {
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
             builder.setAllowedMentions(AllowedMentions.none());
             builder.setUsername(ChatColor.stripColor(name));
-            if(avatarUrl != null)
-                builder.setAvatarUrl(avatarUrl);
-            else {
-                builder.setAvatarUrl(String.format(FALLBACK_AVATAR, "MHF_ALEX", (System.currentTimeMillis() / 1000)));
-            }
+            builder.setAvatarUrl(Objects.requireNonNullElseGet(avatarUrl, () -> String.format(FALLBACK_AVATAR, "MHF_ALEX", (System.currentTimeMillis() / 1000))));
             String msg = ChatColor.stripColor(message);
             builder.setContent(msg);
             builder.resetEmbeds();

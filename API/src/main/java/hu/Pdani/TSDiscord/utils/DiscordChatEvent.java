@@ -16,7 +16,15 @@ public class DiscordChatEvent extends Event implements Cancellable {
     private String message;
     private final Set<Player> players;
     private final Player sender;
+    private String channel;
 
+    /**
+     * @deprecated use {@link DiscordChatEvent#DiscordChatEvent(String, String, String, Set)}
+     * @param user the name of the sender
+     * @param message the text message
+     * @param players the target audience
+     */
+    @Deprecated(forRemoval = true)
     public DiscordChatEvent(@NotNull String user, @NotNull String message, Set<Player> players){
         super(true);
         this.user = user;
@@ -24,8 +32,32 @@ public class DiscordChatEvent extends Event implements Cancellable {
         this.message = message;
         this.players = players;
         this.sender = null;
+        this.channel = "main";
     }
 
+    /**
+     * @param user the name of the sender
+     * @param channel the channel name (usually {@code main})
+     * @param message the text message
+     * @param players the target audience
+     */
+    public DiscordChatEvent(@NotNull String user, @NotNull String channel, @NotNull String message, Set<Player> players){
+        super(true);
+        this.user = user;
+        this.origin = DiscordChatEventOrigin.DISCORD;
+        this.message = message;
+        this.players = players;
+        this.sender = null;
+        this.channel = channel;
+    }
+
+    /**
+     * @deprecated use {@link DiscordChatEvent#DiscordChatEvent(String, String, String, Player)}
+     * @param user the name of the sender
+     * @param message the text message
+     * @param sender the {@link Player} behind the message
+     */
+    @Deprecated(forRemoval = true)
     public DiscordChatEvent(@NotNull String user, @NotNull String message, Player sender){
         super(true);
         this.user = user;
@@ -33,6 +65,23 @@ public class DiscordChatEvent extends Event implements Cancellable {
         this.message = message;
         this.players = null;
         this.sender = sender;
+        this.channel = "main";
+    }
+
+    /**
+     * @param user the name of the sender
+     * @param channel the channel name (usually {@code main})
+     * @param message the text message
+     * @param sender the {@link Player} behind the message
+     */
+    public DiscordChatEvent(@NotNull String user, @NotNull String channel, @NotNull String message, Player sender){
+        super(true);
+        this.user = user;
+        this.origin = DiscordChatEventOrigin.MINECRAFT;
+        this.message = message;
+        this.players = null;
+        this.sender = sender;
+        this.channel = channel;
     }
 
     /**
@@ -90,6 +139,15 @@ public class DiscordChatEvent extends Event implements Cancellable {
      */
     public Player getSender() {
         return sender;
+    }
+
+    /**
+     * Get the channel this message targets, or originated from <br>
+     * Most of the time this should return {@code main}
+     * @return the name of the channel
+     */
+    public String getChannel() {
+        return channel;
     }
 
     @NotNull

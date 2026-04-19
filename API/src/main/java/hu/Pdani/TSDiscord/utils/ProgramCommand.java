@@ -1,6 +1,7 @@
 package hu.Pdani.TSDiscord.utils;
 
 import org.javacord.api.entity.permission.PermissionType;
+import org.javacord.api.interaction.AutocompleteInteraction;
 import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
@@ -13,6 +14,8 @@ public interface ProgramCommand {
     void run(InteractionOriginalResponseUpdater builder, List<SlashCommandInteractionOption> options);
     @NotNull String getLabel();
     @NotNull String getDescription();
+
+    default void autocomplete(AutocompleteInteraction interaction){}
 
     @Nullable
     default List<SlashCommandOption> getOptions() {

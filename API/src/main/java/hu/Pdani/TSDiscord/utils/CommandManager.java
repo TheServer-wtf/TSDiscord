@@ -10,13 +10,13 @@ public class CommandManager {
     private static final Map<String,ProgramCommand> commandMap = new HashMap<>();
     public static void add(ProgramCommand command){
         if(TSDPlugin.isStarted())
-            throw new IllegalStateException("You can't add commands after the plugin started");
-        if(command.getLabel() == null || command.getLabel().isEmpty())
-            throw new IllegalArgumentException("Command label can not be null or empty");
-        if(command.getDescription() == null || command.getDescription().isEmpty())
-            throw new IllegalArgumentException("Command description can not be null or empty");
+            throw new IllegalStateException("Can't add commands after plugin startup");
+        if(command.getLabel().isEmpty())
+            throw new IllegalArgumentException("Command label can not be empty");
+        if(command.getDescription().isEmpty())
+            throw new IllegalArgumentException("Command description can not be empty");
         if(commandMap.containsKey(command.getLabel().toLowerCase()))
-            throw new IllegalArgumentException("Command already added");
+            throw new IllegalArgumentException("Command with this label already added");
         commandMap.put(command.getLabel().toLowerCase(),command);
     }
     public static ProgramCommand get(String label){

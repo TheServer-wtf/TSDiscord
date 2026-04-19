@@ -13,7 +13,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.javacord.api.entity.channel.ServerTextChannel;
-import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.server.Server;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,7 +95,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onChat(AsyncPlayerChatEvent e){
         if(!e.isCancelled())
-            BotHandler.chat(e.getPlayer(),e.getMessage());
+            BotHandler.sendChat(plugin, "main",e.getPlayer(),e.getMessage());
     }
 
     @Override
@@ -107,16 +105,25 @@ public class DiscordListener implements Listener, MessageCreateListener {
         }
         if(!gmre.isServerMessage())
             return;
-        boolean isList = plugin.getConfig().isList("channels.main");
-        String channel = plugin.getConfig().getString("channels.main","");
+        String channelName = null;
         List<String> channels = new ArrayList<>();
-        if(isList) {
-            channels = plugin.getConfig().getStringList("channels.main");
-        } else {
-            if(!channel.isEmpty())
-                channels.add(channel);
+        for(String cn : plugin.getChannelList()) {
+            cn = cn.replace(".", "\\.").toLowerCase();
+            channels.clear();
+            boolean isList = plugin.getConfig().isList("channels."+cn);
+            String channel = plugin.getConfig().getString("channels."+cn, "");
+            if (isList) {
+                channels = plugin.getConfig().getStringList("channels."+cn);
+            } else {
+                if (!channel.isEmpty())
+                    channels.add(channel);
+            }
+            if (channels.contains(gmre.getChannel().getIdAsString())) {
+                channelName = cn;
+                break;
+            }
         }
-        if(!channels.contains(gmre.getChannel().getIdAsString()))
+        if(channelName == null || channelName.isEmpty())
             return;
         Message msg = gmre.getMessage();
         MessageAuthor author = gmre.getMessageAuthor();
@@ -140,19 +147,21 @@ public class DiscordListener implements Listener, MessageCreateListener {
             replyFormat = getHexColors(replyFormat);
         }
         message = getMentionNicks(message,gmre.getServer().orElse(null), msg.getMentionedUsers());
-        DiscordChatEvent dcevent = new DiscordChatEvent(getUserNick(Objects.requireNonNull(gmre.getServer().orElse(null)), Objects.requireNonNull(author.asUser().orElse(null))),message,new HashSet<>(plugin.getServer().getOnlinePlayers()));
+        DiscordChatEvent dcevent = new DiscordChatEvent(getUserNick(Objects.requireNonNull(gmre.getServer().orElse(null)), Objects.requireNonNull(author.asUser().orElse(null))), channelName, message, new HashSet<>(plugin.getServer().getOnlinePlayers()));
         plugin.getServer().getPluginManager().callEvent(dcevent);
         if(dcevent.isCancelled() || dcevent.getMessage().isEmpty())
             return;
-        if(!isReply)
-            plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat),dcevent.getUser(),dcevent.getMessage()));
-        else
-            plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat),dcevent.getUser(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),dcevent.getMessage()));
-        for(Player p : dcevent.getPlayers()){
-            if(!isReply)
-                p.sendMessage(String.format(c(chatFormat),dcevent.getUser(),format(ChatColor.stripColor(dcevent.getMessage()))));
+        if(!dcevent.getPlayers().isEmpty()) {
+            if (!isReply)
+                plugin.getServer().getConsoleSender().sendMessage(String.format(c(chatFormat), dcevent.getUser(), dcevent.getMessage()));
             else
-                p.sendMessage(String.format(c(replyFormat),dcevent.getUser(),msg.getReferencedMessage().get().getAuthor().getDisplayName(),format(ChatColor.stripColor(dcevent.getMessage()))));
+                plugin.getServer().getConsoleSender().sendMessage(String.format(c(replyFormat), dcevent.getUser(), msg.getReferencedMessage().get().getAuthor().getDisplayName(), dcevent.getMessage()));
+            for (Player p : dcevent.getPlayers()) {
+                if (!isReply)
+                    p.sendMessage(String.format(c(chatFormat), dcevent.getUser(), format(ChatColor.stripColor(dcevent.getMessage()))));
+                else
+                    p.sendMessage(String.format(c(replyFormat), dcevent.getUser(), msg.getReferencedMessage().get().getAuthor().getDisplayName(), format(ChatColor.stripColor(dcevent.getMessage()))));
+            }
         }
         FileConfiguration important = ImportantConfig.getConfig();
         boolean modify = false;
@@ -164,7 +173,7 @@ public class DiscordListener implements Listener, MessageCreateListener {
                 ServerTextChannel tc = gmre.getApi().getServerTextChannelById(c).orElse(null);
                 if(tc == null)
                     continue;
-                Webhook webhook = tc.createWebhookBuilder().setName("TSDiscord").setAuditLogReason("Missing webhook for TSDiscord").setAvatar(gmre.getApi().getYourself().getAvatar()).create().join();
+                Webhook webhook = tc.createWebhookBuilder().setName("MC Server Link").setAuditLogReason("Missing webhook for chat link plugin").setAvatar(gmre.getApi().getYourself().getAvatar()).create().join();
                 hookId = webhook.getIdAsString();
                 important.set("webhooks." + tc.getId(), hookId);
                 modify = true;
