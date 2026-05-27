@@ -26,7 +26,7 @@
 <dependency>
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord-API</artifactId>
-    <version>1.0.0</version> <!-- NOTE: The API version differs from the plugin version! Check the repo for the latest version. -->
+    <version>0.24.0</version>
     <scope>provided</scope>
 </dependency>
 ```
