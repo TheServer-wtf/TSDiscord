@@ -5,7 +5,7 @@
     <parent>
         <artifactId>TSDiscord</artifactId>
         <groupId>hu.Pdani</groupId>
-        <version>0.23.0</version>
+        <version>0.24.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -91,6 +91,14 @@
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <outputFile>${project.parent.basedir}\out\${project.build.finalName}.jar</outputFile>
+                            <filters>
+                                <filter>
+                                    <artifact>hu.Pdani:TSDiscordAPI</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.*</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>

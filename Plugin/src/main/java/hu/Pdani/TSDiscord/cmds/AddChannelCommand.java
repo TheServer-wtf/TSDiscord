@@ -50,10 +50,10 @@ public class AddChannelCommand implements ProgramCommand {
     public void autocomplete(AutocompleteInteraction interaction) {
         interaction.getOptionByName("type").ifPresent(option -> {
             if (option.isFocused().orElse(false)) {
-                interaction.respondWithChoices(List.of(
-                        SlashCommandOptionChoice.create("text", "main"),
-                        SlashCommandOptionChoice.create("status", "status")
-                )).exceptionally(ExceptionLogger.get());
+                List<SlashCommandOptionChoice> choices = new ArrayList<>();
+                choices.add(SlashCommandOptionChoice.create("status", "status"));
+                choices.addAll(TSDiscordPlugin.getPlugin().getChannels().stream().map(channel -> SlashCommandOptionChoice.create(channel.label, channel.name)).toList());
+                interaction.respondWithChoices(choices).exceptionally(ExceptionLogger.get());
             }
         });
     }

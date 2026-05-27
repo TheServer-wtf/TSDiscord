@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,7 +15,7 @@ public abstract class TSDPlugin extends JavaPlugin {
     private static TSDPlugin plugin = null;
 
     // <Channel, Owner>
-    private final Map<String, JavaPlugin> channels = new HashMap<>();
+    private final Map<String, Channel> channels = new HashMap<>();
 
     void onEnable(TSDPlugin self){
         assert self != null;
@@ -25,17 +24,6 @@ public abstract class TSDPlugin extends JavaPlugin {
     public static boolean isStarted(){
         return plugin != null;
     }
-
-    /**
-     * Send a message to the {@code main} channel on Discord as the bot
-     * @param sender the plugin
-     * @param message the message
-     * @throws RateLimitException if the rate limit is exceeded
-     * @throws IllegalCallerException if the {@code sender} is not the owner of the {@code main} channel
-     * @deprecated use {@link #sendMessage(JavaPlugin, String, String)} instead
-     */
-    @Deprecated
-    public abstract void sendMessage(@NotNull JavaPlugin sender, @NotNull String message) throws RateLimitException, IllegalCallerException;
 
     /**
      * Send a message to the given channel on Discord as the bot
@@ -63,46 +51,73 @@ public abstract class TSDPlugin extends JavaPlugin {
      * Register a new message channel for use <br>
      * Great care should be taken that channels no longer in use are unregistered
      * @param owner the caller plugin
-     * @param channel the name of the channel
+     * @param channelName the name of the channel
+     * @deprecated this method will be removed in a future version, use {@link #registerChannel(JavaPlugin, Channel)} instead
      */
-    public void registerChannel(@NotNull JavaPlugin owner, @NotNull String channel) {
-        if(channel.equalsIgnoreCase("status"))
+    @Deprecated(forRemoval = true)
+    public void registerChannel(@NotNull JavaPlugin owner, @NotNull String channelName) {
+        if(channelName.equalsIgnoreCase("status"))
             throw new IllegalArgumentException("Invalid channel name");
-        if(channels.containsKey(channel.toLowerCase()))
+        if(channels.containsKey(channelName.toLowerCase()))
             throw new IllegalArgumentException("A channel already exists with the given name");
-        channels.put(channel.toLowerCase(), owner);
+        Channel channel = new Channel(channelName, channelName);
+        channel.plugin = owner;
+        channels.put(channelName.toLowerCase(), channel);
     }
 
     /**
      * Unregister a channel that is no longer in use
      * @param owner the caller plugin
-     * @param channel the name of the channel
+     * @param channelName the name of the channel
      */
-    public void unregisterChannel(@NotNull JavaPlugin owner, @NotNull String channel) {
-        if(channel.equalsIgnoreCase("status"))
+    public void unregisterChannel(@NotNull JavaPlugin owner, @NotNull String channelName) {
+        if(channelName.equalsIgnoreCase("status"))
             throw new IllegalArgumentException("Invalid channel name");
-        if(!channels.containsKey(channel.toLowerCase()))
+        if(!channels.containsKey(channelName.toLowerCase()))
             throw new IllegalArgumentException("A channel does not exists with the given name");
-        if(!channels.get(channel.toLowerCase()).equals(owner))
+        if(!channels.get(channelName.toLowerCase()).plugin.equals(owner))
             throw new IllegalCallerException("The channel with the given name does not belong to caller");
-        channels.remove(channel.toLowerCase());
+        channels.remove(channelName.toLowerCase());
     }
 
     /**
-     * Gets the list of all currently registered channels
-     * @return a set of channels
+     * Register a new message channel for use <br>
+     * Great care should be taken that channels no longer in use are unregistered
+     * @param owner the caller plugin
+     * @param channel the name of the channel
+     */
+    public void registerChannel(@NotNull JavaPlugin owner, @NotNull Channel channel) {
+        if(channel.name.equalsIgnoreCase("status"))
+            throw new IllegalArgumentException("Invalid channel name");
+        if(channels.containsKey(channel.name.toLowerCase()))
+            throw new IllegalArgumentException("A channel already exists with the given name");
+        channel.plugin = owner;
+        channels.put(channel.name.toLowerCase(), channel);
+    }
+
+    /**
+     * Gets the list of all currently registered channel names
+     * @return a set of channel names
      */
     public Set<String> getChannelList() {
         return new HashSet<>(channels.keySet());
     }
 
     /**
+     * Gets the list of all currently registered channels
+     * @return a set of channels
+     */
+    public Set<Channel> getChannels() {
+        return new HashSet<>(channels.values());
+    }
+
+    /**
      * Returns whether the sender is the owner of the given channel
      * @param caller the plugin to check against
-     * @param channel the name of the channel
-     * @return {@code true} if the {@code channel} exists and {@code caller} is the owner, {@code false} otherwise
+     * @param channelName the name of the channel
+     * @return {@code true} if the channel exists with the given name and {@code caller} is the owner, {@code false} otherwise
      */
-    public boolean isChannelOwner(@NotNull JavaPlugin caller, @NotNull String channel) {
-        return channels.containsKey(channel.toLowerCase()) && channels.get(channel.toLowerCase()).equals(caller);
+    public boolean isChannelOwner(@NotNull JavaPlugin caller, @NotNull String channelName) {
+        return channels.containsKey(channelName.toLowerCase()) && channels.get(channelName.toLowerCase()).plugin.equals(caller);
     }
 }

@@ -17,7 +17,7 @@ import java.util.Scanner;
 
 public class Updater {
     private Map<String,Object> obj;
-    private String repo;
+    private final String repo;
     private String latest;
     private long lastLoad = -1;
     private boolean useMaven = false;
@@ -28,7 +28,7 @@ public class Updater {
      */
     public Updater(String repo){
         if(repo == null || repo.isEmpty())
-            return;
+            throw new IllegalArgumentException("repo must contain a valid string");
         this.repo = repo;
         loadConfig(false);
     }

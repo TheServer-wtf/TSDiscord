@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class ImportantConfig {
     private static File configFile;
@@ -28,6 +29,11 @@ public class ImportantConfig {
         loadConfig();
     }
     public static void saveConfig() throws IOException {
+        config.options().setHeader(List.of(
+                "You should not feel the need to edit this file by yourself",
+                "That's why it is called 'donotmodify.yml'",
+                "The plugin author is not responsible for any problems that occur if this file is manually changed"
+        ));
         config.save(configFile);
     }
     public static FileConfiguration getConfig(){

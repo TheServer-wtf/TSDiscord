@@ -47,7 +47,7 @@ public class TSDiscordPlugin extends TSDPlugin {
         CommandManager.add(new VersionCommand());
         CommandManager.add(new AddChannelCommand());
         CommandManager.add(new DelChannelCommand());
-        registerChannel(this,"main");
+        registerChannel(this,new Channel("main", "text"));
     }
 
     @Override
@@ -163,13 +163,6 @@ public class TSDiscordPlugin extends TSDPlugin {
     }
 
     private final HashMap<JavaPlugin,Long> messageLimit = new HashMap<>();
-
-    @Override
-    public void sendMessage(@NotNull JavaPlugin sender, @NotNull String message) throws RateLimitException, IllegalCallerException {
-        if(!sender.equals(this))
-            throw new IllegalCallerException("Access to the main channel is restricted");
-        sendMessage(sender, "main", message);
-    }
 
     public static final int RateLimit = 250;
 

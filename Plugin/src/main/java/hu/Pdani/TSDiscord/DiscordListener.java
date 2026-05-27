@@ -242,6 +242,6 @@ public class DiscordListener implements Listener, MessageCreateListener {
     }
 
     private String getUserNick(@NotNull Server server, @NotNull User user) {
-        return user.getNickname(server).orElse(user.getDisplayName(server));
+        return user.getDisplayName(server);
     }
 }
