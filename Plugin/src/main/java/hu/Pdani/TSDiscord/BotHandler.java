@@ -7,6 +7,7 @@ import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
 import hu.Pdani.TSDiscord.utils.ImportantConfig;
 import hu.Pdani.TSDiscord.utils.ProgramCommand;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -185,7 +186,9 @@ public class BotHandler {
                     String title = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.title", "Current Server Status");
                     embed.setTitle(title);
                     String state = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.title", "State");
-                    String text = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.online", ":white_check_mark: Server is online.");
+                    String text = !Bukkit.getServer().hasWhitelist()
+                            ? TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.online", ":white_check_mark: Server is online.")
+                            : TSDiscordPlugin.getPlugin().getConfig().getString("message.status.state.maintenance", ":wrench: Under maintenance!");
                     embed.addField(state, text, false);
                     String playertext = TSDiscordPlugin.getPlugin().getConfig().getString("message.status.players", "Players online");
                     embed.addField(playertext, online + "/" + max, false);

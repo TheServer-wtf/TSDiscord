@@ -21,4 +21,5 @@ message:
       title: 'State'
       online: ':white_check_mark: Server is online.'
       offline: ':x: Server is offline.'
+      maintenance: ':wrench: Under maintenance!'
     players: 'Players online'
