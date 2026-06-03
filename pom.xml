@@ -6,7 +6,7 @@
 
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord</artifactId>
-    <version>0.24.0</version>
+    <version>0.24.1</version>
     <modules>
         <module>API</module>
         <module>Plugin</module>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.20.6-R0.1-SNAPSHOT</version>
+            <version>1.21.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
