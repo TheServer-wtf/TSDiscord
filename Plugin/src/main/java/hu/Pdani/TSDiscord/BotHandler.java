@@ -1,7 +1,9 @@
 package hu.Pdani.TSDiscord;
 
 import club.minnced.discord.webhook.WebhookClient;
+import club.minnced.discord.webhook.receive.ReadonlyMessage;
 import club.minnced.discord.webhook.send.AllowedMentions;
+import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import hu.Pdani.TSDiscord.utils.CommandManager;
 import hu.Pdani.TSDiscord.utils.DiscordChatEvent;
@@ -34,14 +36,18 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static hu.Pdani.TSDiscord.TSDiscordPlugin.c;
+import static hu.Pdani.TSDiscord.TSDiscordPlugin.cl;
 
 public class BotHandler {
     private static final String DEF_AVATAR = "https://pghost.org/avatar/?url=%1$s&size=300&helm";
@@ -415,14 +421,19 @@ public class BotHandler {
     public static boolean isEnabled(){
         return bot != null;
     }
-    public static void sendWebhook(String webhookId, String message, String name, String avatarUrl, Message original){
+    private static final Map<String, WebhookClient> webhookClients = new HashMap<>();
+    public static void sendWebhook(final String webhookId, final String message, final String name, final String avatarUrl, final Message original){
         validateWebhook(webhookId).whenComplete((hook,error)->{
             if(error != null){
                 TSDiscordPlugin.getPlugin().getLogger().severe(String.format("Error while trying to send webhook: %s",error));
                 TSDiscordPlugin.getPlugin().sendDebug(String.format("Error while trying to send webhook: %s",error));
                 return;
             }
-            WebhookClient client = WebhookClient.withId(hook.getId(),hook.asIncomingWebhook().get().getToken());
+            if(webhookClients.get(webhookId) != null && webhookClients.get(webhookId).isShutdown()){
+                webhookClients.remove(webhookId);
+            }
+            WebhookClient client = webhookClients.getOrDefault(webhookId, WebhookClient.withId(hook.getId(),hook.asIncomingWebhook().get().getToken()));
+            webhookClients.put(webhookId, client);
             WebhookMessageBuilder builder = new WebhookMessageBuilder();
             builder.setAllowedMentions(AllowedMentions.none());
             builder.setUsername(ChatColor.stripColor(name));
@@ -444,16 +455,35 @@ public class BotHandler {
                         if(builder.getFileAmount()+ failed.get() == attachments.size()){
                             if(client.isShutdown())
                                 return;
-                            client.send(builder.build()).join();
-                            client.close();
+                            monitorChanges(client, original, client.send(builder.build()).join());
                         }
                     });
                 }
             } else {
-                client.send(builder.build());
-                client.close();
+                ReadonlyMessage sent = client.send(builder.build()).join();
+                if(original != null)
+                    monitorChanges(client, original, sent);
             }
         });
+    }
+    private static void monitorChanges(WebhookClient client, Message original, ReadonlyMessage sent) {
+        original.addMessageEditListener(event -> {
+            if(client.isShutdown())
+                return;
+            WebhookMessage msg = sent.toWebhookMessage();
+            WebhookMessageBuilder builder = new WebhookMessageBuilder();
+            builder.setAllowedMentions(AllowedMentions.none());
+            builder.setUsername(msg.getUsername());
+            builder.setAvatarUrl(msg.getAvatarUrl());
+            builder.setContent(event.getMessageContent());
+            builder.resetEmbeds();
+            client.edit(sent.getId(), builder.build()).join();
+        }).removeAfter(10, TimeUnit.MINUTES);
+        original.addMessageDeleteListener(event -> {
+            if(client.isShutdown())
+                return;
+            client.delete(sent.getId()).join();
+        }).removeAfter(10, TimeUnit.MINUTES);
     }
     public static void sendWebhook(String webhookId, String message, String name, String avatarUrl){
         sendWebhook(webhookId, message, name, avatarUrl,null);
