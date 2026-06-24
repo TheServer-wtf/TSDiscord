@@ -26,7 +26,7 @@
 <dependency>
     <groupId>hu.Pdani</groupId>
     <artifactId>TSDiscord-API</artifactId>
-    <version>0.24.0</version>
+    <version>0.25.0</version>
     <scope>provided</scope>
 </dependency>
 ```
